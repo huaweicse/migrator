@@ -91,12 +91,10 @@ public class ModifyHSFProviderAction implements Action {
 
   }
 
-
   public static void main(String[] args) {
     new ModifyHSFProviderAction().run();
   }
 }
-
 
 
 
