@@ -11,6 +11,8 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSONObject;
+
 /**
  * 功能描述：
  *   扫描目录下面的所有JAVA文件，识别文件是否包含 @HSFConsumer 标签，如果存在，将其替换为 @FeignClient。
@@ -20,23 +22,31 @@ public class ModifyHSFConsumerAction implements Action {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFConsumerAction.class);
 
-  private static final String PROJECT_CATALOGUE = System.getProperty("user.dir");
-
   private ArrayList<File> fileList = new ArrayList<>();
 
-  private static final String HSF_CONSUMER = "HSFConsumer";
+  private static final String LINE_SEPARATOR = "line.separator";
 
-  private static final String FEIGN_CLIENT = "FeignClient";
+  private static final String HSF_CONSUMER = "@HSFConsumer";
+
+  /**
+   *  考虑到不同版本依赖可能相关需要替换的class类型（HSFConsumer、HSFProvider、FeignClient···）所属包名不一致，
+   *  所以采用参数模式进行数值传递，故我们对参数做如下规定：
+   *
+   *   @param args
+   *  args[0]：需要修改的项目目录
+   *  args[1]: HSFConsumer的完整包名
+   *  args[2]: FeignClient的完整包名
+   */
 
   @Override
   public void run(String... args) {
-    File fileCatalogue = new File(PROJECT_CATALOGUE);
+    File fileCatalogue = new File(args[0]);
     File[] files = fileCatalogue.listFiles();
     if (files == null) {
       return;
     }
     filesAdd(files);
-    replaceContent();
+    replaceContent(args);
   }
 
   private void filesAdd(File[] files) {
@@ -50,7 +60,7 @@ public class ModifyHSFConsumerAction implements Action {
     });
   }
 
-  private void replaceContent() {
+  private void replaceContent(String... args) {
     fileList.forEach(file -> {
       try {
         File targetFile = new File(file.getAbsolutePath());
@@ -58,9 +68,23 @@ public class ModifyHSFConsumerAction implements Action {
         CharArrayWriter tempStream = new CharArrayWriter();
         String line = null;
         while ((line = bufferedReader.readLine()) != null) {
-          line = line.replaceAll(HSF_CONSUMER, FEIGN_CLIENT);
+          // 处理import中的包名
+          line = line.replace(args[1], args[2]);
+          // 处理@HSFConsumer注解信息及接口信息
+          if (line.contains(HSF_CONSUMER)) {
+            String nextLine = bufferedReader.readLine().replace(";", "");
+            String commonStr = nextLine.trim().split(" ")[2];
+            line = line.replace(line.trim(), feignClientInfo(line, commonStr));
+            tempStream.write(line);
+            tempStream.append(System.getProperty(LINE_SEPARATOR));
+            nextLine = nextLine.replace(nextLine.trim(), interfaceExtension(nextLine));
+            tempStream.write(nextLine);
+            tempStream.append(System.getProperty(LINE_SEPARATOR));
+            continue;
+          }
+          // 处理其余文件内容
           tempStream.write(line);
-          tempStream.append(System.getProperty("line.separator"));
+          tempStream.append(System.getProperty(LINE_SEPARATOR));
         }
         bufferedReader.close();
         FileWriter fileWriter = new FileWriter(targetFile);
@@ -70,5 +94,36 @@ public class ModifyHSFConsumerAction implements Action {
         LOGGER.error("file content replacement failed and message is {}", e.getMessage());
       }
     });
+  }
+
+  // FeignClient属性信息
+  private String feignClientInfo(String line, String commonStr) {
+    StringBuilder stringBuilder = new StringBuilder();
+    // 将目标字符串转化为JsonObject获取被调的微服务名称及进行属性信息拼接
+    line = line.replace('=', ':');
+    String jsonString = "{" + line.substring(line.indexOf("(") + 1, line.lastIndexOf(")")) + "}";
+    String microName = JSONObject.parseObject(jsonString).get("serviceGroup").toString();
+    stringBuilder.append("@FeignClient(name = \"")
+        .append(microName)
+        .append("\"")
+        .append(", contextId = \"")
+        .append(commonStr)
+        .append("\", ")
+        .append("path = \"/")
+        .append(commonStr)
+        .append("\")");
+    return new String(stringBuilder);
+  }
+
+  // 接口拓展信息
+  private String interfaceExtension(String line) {
+    StringBuilder stringBuilder = new StringBuilder();
+    String[] s = line.trim().split(" ");
+    stringBuilder.append("public interface ")
+        .append(s[1])
+        .append("Ext extends ")
+        .append(s[1])
+        .append("{}");
+    return new String(stringBuilder);
   }
 }
