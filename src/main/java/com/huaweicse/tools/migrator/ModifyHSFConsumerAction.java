@@ -1,6 +1,5 @@
 package com.huaweicse.tools.migrator;
 
-import java.awt.LinearGradientPaint;
 import java.io.BufferedReader;
 import java.io.CharArrayWriter;
 import java.io.File;
