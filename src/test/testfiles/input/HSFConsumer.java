@@ -13,4 +13,9 @@ public class HSFConsumer {
   @HSFConsumer(clientTimeout = 3000, serviceGroup = "consumer", serviceVersion = "1.0.0")
   private ConsumerService consumerService;
 
+  @HSFConsumer(clientTimeout = 3000, serviceGroup = "finance", serviceVersion = "1.0.0")
+  private FinanceService financeService;
+
+  @HSFConsumer(clientTimeout = 3000, serviceGroup = "user", serviceVersion = "1.0.0")
+  private UserService userService;
 }

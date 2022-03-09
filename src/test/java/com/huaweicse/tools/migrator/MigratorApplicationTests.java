@@ -27,10 +27,16 @@ class MigratorApplicationTests {
     // 测试文件修改是否正确
     String dirPath = BASE_PATH + "\\src\\test\\testfiles";
     modifyHSFConsumerAction.run(dirPath + "\\input", HSF_CONSUMER_PACKAGE_NAME, FEIGN_CLIENT_PACKAGE_NAME);
+    // 规范文件测试结果验证
     Assert.assertTrue(IOUtils.contentEquals(new FileInputStream(dirPath + "\\input\\HSFConsumer.java"),
         new FileInputStream(dirPath + "\\output\\HSFConsumer.java")));
+    // 非规范文件测试结果验证
+    Assert.assertTrue(IOUtils.contentEquals(new FileInputStream(dirPath + "\\input\\HSFNonstandardConfig.java"),
+        new FileInputStream(dirPath + "\\output\\HSFNonstandardConfig.java")));
     // 还原被修改的文件内容，方便下次测试
     IOUtils.copy(new FileInputStream(dirPath + "\\originfiles\\HSFConsumer.java"),
         new FileOutputStream(dirPath + "\\input\\HSFConsumer.java"));
+    IOUtils.copy(new FileInputStream(dirPath + "\\originfiles\\HSFNonstandardConfig.java"),
+        new FileOutputStream(dirPath + "\\input\\HSFNonstandardConfig.java"));
   }
 }

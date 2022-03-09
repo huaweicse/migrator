@@ -1,5 +1,6 @@
 package com.huaweicse.tools.migrator;
 
+import java.awt.LinearGradientPaint;
 import java.io.BufferedReader;
 import java.io.CharArrayWriter;
 import java.io.File;
@@ -76,7 +77,7 @@ public class ModifyHSFConsumerAction implements Action {
           if (line.contains(HSF_CONSUMER)) {
             String nextLine = bufferedReader.readLine().replace(";", "");
             String commonStr = nextLine.trim().split(" ")[2];
-            line = line.replace(line.trim(), feignClientInfo(line, commonStr));
+            line = line.replace(line.trim(), feignClientInfo(line, commonStr, file));
             tempStream.write(line);
             tempStream.append(System.getProperty(LINE_SEPARATOR));
             nextLine = nextLine.replace(nextLine.trim(), interfaceExtension(nextLine));
@@ -99,14 +100,21 @@ public class ModifyHSFConsumerAction implements Action {
   }
 
   // FeignClient属性信息
-  private String feignClientInfo(String line, String commonStr) {
+  private String feignClientInfo(String line, String commonStr, File file) {
     StringBuilder stringBuilder = new StringBuilder();
     // 将目标字符串转化为JsonObject获取被调的微服务名称及进行属性信息拼接
     line = line.replace('=', ':');
     String jsonString = "{" + line.substring(line.indexOf("(") + 1, line.lastIndexOf(")")) + "}";
-    String microName = JSONObject.parseObject(jsonString).get("serviceGroup").toString();
+    Object serviceGroupValue = JSONObject.parseObject(jsonString).get("serviceGroup");
+    // 当开发者没有配置serviceGroup时，不抛出异常，保证后续内容正常修改，待内容修改全部完成后在error日志文件中查询相关不规范地方进行手动修改
+    if (serviceGroupValue == null) {
+      LOGGER.error("content replacement appear error, "
+              + "need manual processing is required and message: Interface declaration missing serviceGroup and interfaceName is {} in file {} ",
+          commonStr, file.getName());
+      serviceGroupValue = "missServiceGroup";
+    }
     stringBuilder.append("@FeignClient(name = \"")
-        .append(microName)
+        .append(serviceGroupValue.toString())
         .append("\"")
         .append(", contextId = \"")
         .append(commonStr)
