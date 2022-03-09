@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 
@@ -18,6 +19,7 @@ import com.alibaba.fastjson.JSONObject;
  *   扫描目录下面的所有JAVA文件，识别文件是否包含 @HSFConsumer 标签，如果存在，将其替换为 @FeignClient。
  *   替换过程中，会替换 import，一并修改 import。
  */
+@Component
 public class ModifyHSFConsumerAction implements Action {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFConsumerAction.class);
@@ -29,7 +31,7 @@ public class ModifyHSFConsumerAction implements Action {
   private static final String HSF_CONSUMER = "@HSFConsumer";
 
   /**
-   *  考虑到不同版本依赖可能相关需要替换的class类型（HSFConsumer、HSFProvider、FeignClient···）所属包名不一致，
+   *  考虑到不同版本依赖可能相关需要替换的class类型（HSFConsumer、FeignClient）所属包名不一致，
    *  所以采用参数模式进行数值传递，故我们对参数做如下规定：
    *
    *   @param args
