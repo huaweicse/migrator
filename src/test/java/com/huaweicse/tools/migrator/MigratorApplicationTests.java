@@ -2,14 +2,11 @@ package com.huaweicse.tools.migrator;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -23,54 +20,47 @@ class MigratorApplicationTests {
 
   private static final String BASE_PATH = System.getProperty("user.dir");
 
+  private static final String TEMP_DIR_PATH = System.getProperty("java.io.tmpdir");
+
   private String fileSeparator = File.separator;
 
-  private String fileBasePath;
+  private String localFileBasePath;
 
-  // 记录被修改的文件名称，方便测试用例通过后进行内容复原
-  private List<String> modifyFileName = new ArrayList<>();
+  private String tempFileBasePath;
 
   @Autowired
   private ModifyHSFConsumerAction modifyHSFConsumerAction;
 
+  @Autowired
+  private ModifyHSFAddBootstrapYamlAction modifyHSFAddBootstrapYamlAction;
+
   // 初始化基础路径及运行内容修改逻辑
   @BeforeAll
-  public void init() {
-    fileBasePath = BASE_PATH + fileSeparator + "testfiles";
-    modifyHSFConsumerAction.run(fileBasePath + fileSeparator + "input");
-  }
-
-  // 还原被修改的文件内容，方便下次测试
-  @AfterAll
-  public void end() throws IOException {
-    modifyFileName.forEach(fileName -> {
-      try {
-        IOUtils.copy(new FileInputStream(genFilePath("originfiles", fileName)),
-            new FileOutputStream(genFilePath("input", fileName)));
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    });
+  public void init() throws IOException {
+    localFileBasePath = BASE_PATH + fileSeparator + "testfiles";
+    tempFileBasePath = TEMP_DIR_PATH + fileSeparator + "migrator";
+    FileUtils.copyDirectoryToDirectory(new File(localFileBasePath + fileSeparator + "input"),
+        new File(tempFileBasePath));
+    modifyHSFConsumerAction.run(tempFileBasePath + fileSeparator + "input");
+    modifyHSFAddBootstrapYamlAction.run(tempFileBasePath + fileSeparator + "input");
   }
 
   // 规范开发风格文件测试
   @Test
   public void testModifyHSFConsumerActionStandardConfig() throws IOException {
     String fileName = "HSFConsumerStandardConfig.java";
-    modifyFileName.add(fileName);
     Assert.assertTrue(
-        IOUtils.contentEquals(new FileInputStream(genFilePath("input", fileName)),
-            new FileInputStream(genFilePath("output", fileName))));
+        IOUtils.contentEquals(new FileInputStream(genFilePath(tempFileBasePath, "input", fileName)),
+            new FileInputStream(genFilePath(localFileBasePath, "output", fileName))));
   }
 
   // 非规范开发风格文件测试
   @Test
   public void testModifyHSFConsumerActionNonstandardConfig() throws IOException {
     String fileName = "HSFConsumerNonstandardConfig.java";
-    modifyFileName.add(fileName);
     Assert.assertTrue(
-        IOUtils.contentEquals(new FileInputStream(genFilePath("input", fileName)),
-            new FileInputStream(genFilePath("output", fileName))));
+        IOUtils.contentEquals(new FileInputStream(genFilePath(tempFileBasePath, "input", fileName)),
+            new FileInputStream(genFilePath(localFileBasePath, "output", fileName))));
   }
 
   // 测试添加bootstrap.yml是否成功
@@ -80,13 +70,14 @@ class MigratorApplicationTests {
     String originBootstrapContextPath =
         BASE_PATH + fileSeparator + "src" + fileSeparator + "main" + fileSeparator + "resources" + fileSeparator
             + "bootstrap.txt";
-    String newBootstrapFilePath = genFilePath("input", "resources" + fileSeparator + "bootstrap.yml");
+    String newBootstrapFilePath =
+        genFilePath(tempFileBasePath, "input", "resources" + fileSeparator + "bootstrap.yml");
     Assert.assertTrue(IOUtils
         .contentEquals(new FileInputStream(originBootstrapContextPath), new FileInputStream(newBootstrapFilePath)));
     // 每次生成bootstrap.yml都会覆盖原来生成的内容，所以测试通过后没必要删除新增的bootstrap.yml文件
   }
 
-  private String genFilePath(String type, String fileName) {
+  private String genFilePath(String fileBasePath, String type, String fileName) {
     return fileBasePath + fileSeparator + type + fileSeparator + fileName;
   }
 }

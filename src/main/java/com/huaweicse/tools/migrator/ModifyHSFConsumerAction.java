@@ -2,9 +2,7 @@ package com.huaweicse.tools.migrator;
 
 import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,10 +30,6 @@ public class ModifyHSFConsumerAction implements Action {
 
   private static final String HSF_CONSUMER = "@HSFConsumer";
 
-  private static final String BASE_PATH = System.getProperty("user.dir");
-
-  private static final String FILE_SEPARATOR = File.separator;
-
   // 保存扫描到的所有java文件
   private ArrayList<File> fileList = new ArrayList<>();
 
@@ -52,9 +46,8 @@ public class ModifyHSFConsumerAction implements Action {
 
   @Override
   public void run(String... args) {
-    File fileCatalogue = new File(args[0]);
-    File[] files = fileCatalogue.listFiles();
-    if (files == null) {
+    File[] files = allFiles(args[0]);
+    if (files == null){
       return;
     }
     filesAdd(files);
@@ -67,27 +60,9 @@ public class ModifyHSFConsumerAction implements Action {
         fileList.add(file);
       }
       if (file.isDirectory()) {
-        // 在需要修改的项目resources文件下添加bootstrap.yml
-        if ("resources".equals(file.getName())) {
-          addYmlFile(new File(file.getAbsoluteFile() + FILE_SEPARATOR + "bootstrap.yml"));
-        }
         filesAdd(file.listFiles());
       }
     });
-  }
-
-  private void addYmlFile(File file) {
-    try {
-      // 避免在windows或者linux系统中带来的差异性
-      String originBootstrapContextPath =
-          BASE_PATH + FILE_SEPARATOR + "src" + FILE_SEPARATOR + "main" + FILE_SEPARATOR + "resources";
-      FileInputStream fileInputStream = new FileInputStream(
-          originBootstrapContextPath + FILE_SEPARATOR + "bootstrap.txt");
-      FileUtils.copyInputStreamToFile(fileInputStream, file);
-    } catch (IOException ex) {
-      // 如果添加配置文件失败，则后续进行手动添加
-      LOGGER.error("add bootstrap.yml failed，need manual processing is required and message is {},", ex.getMessage());
-    }
   }
 
   private void replaceContent() {
