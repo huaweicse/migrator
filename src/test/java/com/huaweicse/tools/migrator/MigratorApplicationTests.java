@@ -26,8 +26,6 @@ class MigratorApplicationTests {
 
   private String localFileBasePath;
 
-  private String tempFileBasePath;
-
   @Autowired
   private ModifyHSFConsumerAction modifyHSFConsumerAction;
 
@@ -38,11 +36,10 @@ class MigratorApplicationTests {
   @BeforeAll
   public void init() throws IOException {
     localFileBasePath = BASE_PATH + fileSeparator + "testfiles";
-    tempFileBasePath = TEMP_DIR_PATH + fileSeparator + "migrator";
     FileUtils.copyDirectoryToDirectory(new File(localFileBasePath + fileSeparator + "input"),
-        new File(tempFileBasePath));
-    modifyHSFConsumerAction.run(tempFileBasePath + fileSeparator + "input");
-    modifyHSFAddBootstrapYamlAction.run(tempFileBasePath + fileSeparator + "input");
+        new File(TEMP_DIR_PATH));
+    modifyHSFConsumerAction.run(TEMP_DIR_PATH + fileSeparator + "input");
+    modifyHSFAddBootstrapYamlAction.run(TEMP_DIR_PATH + fileSeparator + "input");
   }
 
   // 规范开发风格文件测试
@@ -50,7 +47,7 @@ class MigratorApplicationTests {
   public void testModifyHSFConsumerActionStandardConfig() throws IOException {
     String fileName = "HSFConsumerStandardConfig.java";
     Assert.assertTrue(
-        IOUtils.contentEquals(new FileInputStream(genFilePath(tempFileBasePath, "input", fileName)),
+        IOUtils.contentEquals(new FileInputStream(genFilePath(TEMP_DIR_PATH, "input", fileName)),
             new FileInputStream(genFilePath(localFileBasePath, "output", fileName))));
   }
 
@@ -59,7 +56,7 @@ class MigratorApplicationTests {
   public void testModifyHSFConsumerActionNonstandardConfig() throws IOException {
     String fileName = "HSFConsumerNonstandardConfig.java";
     Assert.assertTrue(
-        IOUtils.contentEquals(new FileInputStream(genFilePath(tempFileBasePath, "input", fileName)),
+        IOUtils.contentEquals(new FileInputStream(genFilePath(TEMP_DIR_PATH, "input", fileName)),
             new FileInputStream(genFilePath(localFileBasePath, "output", fileName))));
   }
 
@@ -71,7 +68,7 @@ class MigratorApplicationTests {
         BASE_PATH + fileSeparator + "src" + fileSeparator + "main" + fileSeparator + "resources" + fileSeparator
             + "bootstrap.txt";
     String newBootstrapFilePath =
-        genFilePath(tempFileBasePath, "input", "resources" + fileSeparator + "bootstrap.yml");
+        genFilePath(TEMP_DIR_PATH, "input", "resources" + fileSeparator + "bootstrap.yml");
     Assert.assertTrue(IOUtils
         .contentEquals(new FileInputStream(originBootstrapContextPath), new FileInputStream(newBootstrapFilePath)));
     // 每次生成bootstrap.yml都会覆盖原来生成的内容，所以测试通过后没必要删除新增的bootstrap.yml文件
