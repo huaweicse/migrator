@@ -8,10 +8,10 @@ import org.springframework.context.annotation.Configuration;
 
 
 @Configuration
-public class HSFNonstandardConfig {
+public class HSFConsumerNonstandardConfig {
 
   @HSFConsumer(clientTimeout = 3000, serviceVersion = "1.0.0")
-  private AbnomalService abnomalService;
+  private MissGroupService missGroupService;
 
   @HSFConsumer(clientTimeout = 3000, serviceGroup = "nomal", serviceVersion = "1.0.0")
   private NomalService nomalService;

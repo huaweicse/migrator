@@ -1,42 +1,92 @@
 package com.huaweicse.tools.migrator;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
+@TestInstance(Lifecycle.PER_CLASS)
 class MigratorApplicationTests {
 
-  private final String BASE_PATH = System.getProperty("user.dir");
+  private static final String BASE_PATH = System.getProperty("user.dir");
 
-  private final String HSF_CONSUMER_PACKAGE_NAME = "com.alibaba.boot.hsf.annotation.HSFConsumer";
+  private String fileSeparator = File.separator;
 
-  private final String FEIGN_CLIENT_PACKAGE_NAME = "org.springframework.cloud.openfeign.FeignClient";
+  private String fileBasePath;
+
+  // 记录被修改的文件名称，方便测试用例通过后进行内容复原
+  private List<String> modifyFileName = new ArrayList<>();
 
   @Autowired
   private ModifyHSFConsumerAction modifyHSFConsumerAction;
 
+  // 初始化基础路径及运行内容修改逻辑
+  @BeforeAll
+  public void init() {
+    fileBasePath = BASE_PATH + fileSeparator + "testfiles";
+    modifyHSFConsumerAction.run(fileBasePath + fileSeparator + "input");
+  }
+
+  // 还原被修改的文件内容，方便下次测试
+  @AfterAll
+  public void end() throws IOException {
+    modifyFileName.forEach(fileName -> {
+      try {
+        IOUtils.copy(new FileInputStream(genFilePath("originfiles", fileName)),
+            new FileOutputStream(genFilePath("input", fileName)));
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    });
+  }
+
+  // 规范开发风格文件测试
   @Test
-  void testModifyHSFConsumerAction() throws IOException {
-    // 测试文件修改是否正确
-    String dirPath = BASE_PATH + "\\src\\test\\testfiles";
-    modifyHSFConsumerAction.run(dirPath + "\\input", HSF_CONSUMER_PACKAGE_NAME, FEIGN_CLIENT_PACKAGE_NAME);
-    // 规范文件测试结果验证
-    Assert.assertTrue(IOUtils.contentEquals(new FileInputStream(dirPath + "\\input\\HSFConsumer.java"),
-        new FileInputStream(dirPath + "\\output\\HSFConsumer.java")));
-    // 非规范文件测试结果验证
-    Assert.assertTrue(IOUtils.contentEquals(new FileInputStream(dirPath + "\\input\\HSFNonstandardConfig.java"),
-        new FileInputStream(dirPath + "\\output\\HSFNonstandardConfig.java")));
-    // 还原被修改的文件内容，方便下次测试
-    IOUtils.copy(new FileInputStream(dirPath + "\\originfiles\\HSFConsumer.java"),
-        new FileOutputStream(dirPath + "\\input\\HSFConsumer.java"));
-    IOUtils.copy(new FileInputStream(dirPath + "\\originfiles\\HSFNonstandardConfig.java"),
-        new FileOutputStream(dirPath + "\\input\\HSFNonstandardConfig.java"));
+  public void testModifyHSFConsumerActionStandardConfig() throws IOException {
+    String fileName = "HSFConsumerStandardConfig.java";
+    modifyFileName.add(fileName);
+    Assert.assertTrue(
+        IOUtils.contentEquals(new FileInputStream(genFilePath("input", fileName)),
+            new FileInputStream(genFilePath("output", fileName))));
+  }
+
+  // 非规范开发风格文件测试
+  @Test
+  public void testModifyHSFConsumerActionNonstandardConfig() throws IOException {
+    String fileName = "HSFConsumerNonstandardConfig.java";
+    modifyFileName.add(fileName);
+    Assert.assertTrue(
+        IOUtils.contentEquals(new FileInputStream(genFilePath("input", fileName)),
+            new FileInputStream(genFilePath("output", fileName))));
+  }
+
+  // 测试添加bootstrap.yml是否成功
+  @Test
+  public void testAddBootstrapFile() throws IOException {
+    // 避免在windows或者linux系统中测试带来的差异性
+    String originBootstrapContextPath =
+        BASE_PATH + fileSeparator + "src" + fileSeparator + "main" + fileSeparator + "resources" + fileSeparator
+            + "bootstrap.txt";
+    String newBootstrapFilePath = genFilePath("input", "resources" + fileSeparator + "bootstrap.yml");
+    Assert.assertTrue(IOUtils
+        .contentEquals(new FileInputStream(originBootstrapContextPath), new FileInputStream(newBootstrapFilePath)));
+    // 每次生成bootstrap.yml都会覆盖原来生成的内容，所以测试通过后没必要删除新增的bootstrap.yml文件
+  }
+
+  private String genFilePath(String type, String fileName) {
+    return fileBasePath + fileSeparator + type + fileSeparator + fileName;
   }
 }

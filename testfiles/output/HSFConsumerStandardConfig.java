@@ -8,10 +8,10 @@ import org.springframework.context.annotation.Configuration;
 
 
 @Configuration
-public class HSFConsumer {
+public class HSFConsumerStandardConfig {
 
-  @FeignClient(name = "consumer", contextId = "consumerService", path = "/consumerService")
-  public interface ConsumerServiceExt extends ConsumerService{}
+  @FeignClient(name = "travel", contextId = "travelService", path = "/travelService")
+  public interface TravelServiceExt extends TravelService{}
 
   @FeignClient(name = "finance", contextId = "financeService", path = "/financeService")
   public interface FinanceServiceExt extends FinanceService{}

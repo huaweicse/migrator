@@ -1,15 +1,19 @@
 package com.huaweicse.tools.migrator;
 
-import java.io.BufferedReader;
 import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
@@ -24,20 +28,26 @@ public class ModifyHSFConsumerAction implements Action {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFConsumerAction.class);
 
-  private ArrayList<File> fileList = new ArrayList<>();
-
   private static final String LINE_SEPARATOR = "line.separator";
 
   private static final String HSF_CONSUMER = "@HSFConsumer";
 
+  private static final String BASE_PATH = System.getProperty("user.dir");
+
+  private static final String FILE_SEPARATOR = File.separator;
+
+  // 保存扫描到的所有java文件
+  private ArrayList<File> fileList = new ArrayList<>();
+
+  @Value("${hsf.consumer.packageName:com.alibaba.boot.hsf.annotation.HSFConsumer}")
+  private String hsfConsumerPackageName;
+
+  @Value("${spring.feignClient.packageName:org.springframework.cloud.openfeign.FeignClient}")
+  private String feignClientPackageName;
+
   /**
-   *  考虑到不同版本依赖可能相关需要替换的class类型（HSFConsumer、FeignClient）所属包名不一致，
-   *  所以采用参数模式进行数值传递，故我们对参数做如下规定：
-   *
    *   @param args
    *  args[0]：需要修改的项目目录
-   *  args[1]: HSFConsumer的完整包名
-   *  args[2]: FeignClient的完整包名
    */
 
   @Override
@@ -48,7 +58,7 @@ public class ModifyHSFConsumerAction implements Action {
       return;
     }
     filesAdd(files);
-    replaceContent(args);
+    replaceContent();
   }
 
   private void filesAdd(File[] files) {
@@ -57,39 +67,59 @@ public class ModifyHSFConsumerAction implements Action {
         fileList.add(file);
       }
       if (file.isDirectory()) {
+        // 在需要修改的项目resources文件下添加bootstrap.yml
+        if ("resources".equals(file.getName())) {
+          addYmlFile(new File(file.getAbsoluteFile() + FILE_SEPARATOR + "bootstrap.yml"));
+        }
         filesAdd(file.listFiles());
       }
     });
   }
 
-  private void replaceContent(String... args) {
+  private void addYmlFile(File file) {
+    try {
+      // 避免在windows或者linux系统中带来的差异性
+      String originBootstrapContextPath =
+          BASE_PATH + FILE_SEPARATOR + "src" + FILE_SEPARATOR + "main" + FILE_SEPARATOR + "resources";
+      FileInputStream fileInputStream = new FileInputStream(
+          originBootstrapContextPath + FILE_SEPARATOR + "bootstrap.txt");
+      FileUtils.copyInputStreamToFile(fileInputStream, file);
+    } catch (IOException ex) {
+      // 如果添加配置文件失败，则后续进行手动添加
+      LOGGER.error("add bootstrap.yml failed，need manual processing is required and message is {},", ex.getMessage());
+    }
+  }
+
+  private void replaceContent() {
     fileList.forEach(file -> {
       try {
-        File targetFile = new File(file.getAbsolutePath());
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(targetFile));
+        List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
         CharArrayWriter tempStream = new CharArrayWriter();
-        String line = null;
-        while ((line = bufferedReader.readLine()) != null) {
+        for (int i = 0; i < lines.size(); i++) {
+          String line = lines.get(i);
           // 处理import中的包名
-          line = line.replace(args[1], args[2]);
+          line = line.replace(hsfConsumerPackageName, feignClientPackageName);
           // 处理@HSFConsumer注解信息及接口信息
           if (line.contains(HSF_CONSUMER)) {
-            String nextLine = bufferedReader.readLine().replace(";", "");
-            String commonStr = nextLine.trim().split(" ")[2];
-            line = line.replace(line.trim(), feignClientInfo(line, commonStr, file));
+            String nextLine = lines.get(i + 1);
+            String interfaceName = nextLine.trim().split(" ")[2].replace(";", "");
+            String feignClientInfo = feignClientInfo(line, interfaceName, file);
+            if (feignClientInfo != null) {
+              line = line.replace(line.trim(), feignClientInfo);
+              nextLine = nextLine.replace(nextLine.trim(), interfaceExtension(nextLine));
+            }
             tempStream.write(line);
             tempStream.append(System.getProperty(LINE_SEPARATOR));
-            nextLine = nextLine.replace(nextLine.trim(), interfaceExtension(nextLine));
+            i++;
             tempStream.write(nextLine);
             tempStream.append(System.getProperty(LINE_SEPARATOR));
             continue;
           }
-          // 处理其余文件内容
+          // 处理本文件中其余内容
           tempStream.write(line);
           tempStream.append(System.getProperty(LINE_SEPARATOR));
         }
-        bufferedReader.close();
-        FileWriter fileWriter = new FileWriter(targetFile);
+        FileWriter fileWriter = new FileWriter(file);
         tempStream.writeTo(fileWriter);
         fileWriter.close();
       } catch (Exception e) {
@@ -110,7 +140,7 @@ public class ModifyHSFConsumerAction implements Action {
       LOGGER.error("content replacement appear error, "
               + "need manual processing is required and message: Interface declaration missing serviceGroup and interfaceName is {} in file {} ",
           commonStr, file.getName());
-      serviceGroupValue = "missServiceGroup";
+      return null;
     }
     stringBuilder.append("@FeignClient(name = \"")
         .append(serviceGroupValue.toString())
