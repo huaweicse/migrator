@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: basic-application
+  cloud:
+    servicecomb:
+      discovery:
+        enabled: true
+        address: ${SC_ADDRESS}
+        appName: basic-application
+        serviceName: ${spring.application.name}
+        version: 0.0.1
+        healthCheckInterval: 30
+      config:
+        serverAddr: ${CC_ADDRESS}
+        serverType: kie
