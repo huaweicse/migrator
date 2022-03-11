@@ -16,7 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 @TestInstance(Lifecycle.PER_CLASS)
-class MigratorApplicationTests {
+public class ModifyHSFConsumerActiontTest {
 
   private static final String BASE_PATH = System.getProperty("user.dir");
 
@@ -29,8 +29,6 @@ class MigratorApplicationTests {
   @Autowired
   private ModifyHSFConsumerAction modifyHSFConsumerAction;
 
-  @Autowired
-  private ModifyHSFAddBootstrapYamlAction modifyHSFAddBootstrapYamlAction;
 
   // 初始化基础路径及运行内容修改逻辑
   @BeforeAll
@@ -39,7 +37,6 @@ class MigratorApplicationTests {
     FileUtils.copyDirectoryToDirectory(new File(localFileBasePath + fileSeparator + "input"),
         new File(TEMP_DIR_PATH));
     modifyHSFConsumerAction.run(TEMP_DIR_PATH + fileSeparator + "input");
-    modifyHSFAddBootstrapYamlAction.run(TEMP_DIR_PATH + fileSeparator + "input");
   }
 
   // 规范开发风格文件测试
@@ -58,20 +55,6 @@ class MigratorApplicationTests {
     Assert.assertTrue(
         IOUtils.contentEquals(new FileInputStream(genFilePath(TEMP_DIR_PATH, "input", fileName)),
             new FileInputStream(genFilePath(localFileBasePath, "output", fileName))));
-  }
-
-  // 测试添加bootstrap.yml是否成功
-  @Test
-  public void testAddBootstrapFile() throws IOException {
-    // 避免在windows或者linux系统中测试带来的差异性
-    String originBootstrapContextPath =
-        BASE_PATH + fileSeparator + "src" + fileSeparator + "main" + fileSeparator + "resources" + fileSeparator
-            + "bootstrap.txt";
-    String newBootstrapFilePath =
-        genFilePath(TEMP_DIR_PATH, "input", "resources" + fileSeparator + "bootstrap.yml");
-    Assert.assertTrue(IOUtils
-        .contentEquals(new FileInputStream(originBootstrapContextPath), new FileInputStream(newBootstrapFilePath)));
-    // 每次生成bootstrap.yml都会覆盖原来生成的内容，所以测试通过后没必要删除新增的bootstrap.yml文件
   }
 
   private String genFilePath(String fileBasePath, String type, String fileName) {

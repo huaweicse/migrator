@@ -4,7 +4,7 @@ public class ModifyHSFAction implements Action {
   @Override
   public void run(String... args) {
     Action[] actions = new Action[] {new ModifyHSFInterface2RestAction(),
-        new ModifyHSFProviderAction(), new ModifyHSFConsumerAction()};
+        new ModifyHSFProviderAction(), new ModifyHSFConsumerAction(), new ModifyHSFAddBootstrapYamlAction()};
     for (Action action : actions) {
       action.run(args);
     }
