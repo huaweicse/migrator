@@ -2,7 +2,7 @@
 
 package com.huaweicse.tools.migrator;
 
-import com.alibaba.boot.hsf.annotation.HSFConsumer;
+import org.springframework.cloud.openfeign.FeignClient;
 
 import org.springframework.context.annotation.Configuration;
 
@@ -10,12 +10,12 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class HSFConsumerStandardConfig {
 
-  @HSFConsumer(clientTimeout = 3000, serviceGroup = "travel", serviceVersion = "1.0.0")
-  private TravelService travelService;
+  @FeignClient(name = "travel", contextId = "travelService", path = "/travelService")
+  public interface TravelServiceExt extends TravelService{}
 
-  @HSFConsumer(clientTimeout = 3000, serviceGroup = "finance", serviceVersion = "1.0.0")
-  private FinanceService financeService;
+  @FeignClient(name = "finance", contextId = "financeService", path = "/financeService")
+  public interface FinanceServiceExt extends FinanceService{}
 
-  @HSFConsumer(clientTimeout = 3000, serviceGroup = "user", serviceVersion = "1.0.0")
-  private UserService userService;
+  @FeignClient(name = "user", contextId = "userService", path = "/userService")
+  public interface UserServiceExt extends UserService{}
 }

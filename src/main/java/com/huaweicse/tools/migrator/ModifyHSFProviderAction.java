@@ -216,15 +216,6 @@ public class ModifyHSFProviderAction implements Action {
     return id;
   }
 
-  public static void main(String[] args) {
-    try {
-      FileUtil.copyFolder("D:\\m\\migrator\\testfiles\\input","D:\\m\\migrator\\testfiles\\output");
-      new ModifyHSFProviderAction().run();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
 }
 
 
