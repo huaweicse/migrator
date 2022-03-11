@@ -1,6 +1,8 @@
 package com.huaweicse.tools.migrator;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,8 @@ import java.util.regex.Pattern;
  */
 @Component
 public class ModifyHSFInterface2RestAction implements Action {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFInterface2RestAction.class);
 
   private static final String INTERFACE_REGEX_PATTERN = "[a-zA-Z]+(.class)";
 
@@ -80,7 +84,7 @@ public class ModifyHSFInterface2RestAction implements Action {
           }
         }
       } catch (IOException e) {
-        e.printStackTrace();
+        LOGGER.error("error filtering interface file and filePath is {}", file.getAbsolutePath());
       }
     }
   }
@@ -89,45 +93,41 @@ public class ModifyHSFInterface2RestAction implements Action {
     fileList.forEach(file -> {
       try {
         CharArrayWriter tempStream = new CharArrayWriter();
-        String tempinterfaceFileName = null;
+        String tempInterfaceFileName = null;
         for (String interfaceFileName : interfaceFileList) {
           if (interfaceFileName.equals(file.getName())) {
-            try {
-              List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
-              for (String line : lines) {
-                if (line.contains("package")) {
-                  writeLine(tempStream, line);
-                  writeLine(tempStream, "");
-                  writeLine(tempStream, "import " + responseBodyPackageName + ";");
-                  writeLine(tempStream, "import " + postMappingPackageName + ";");
-                  continue;
-                }
-                if (!("".equals(line) || isEffectiveInterface(line))) {
-                  String router = line.trim().replace("(", " ").split(" ")[1];
-                  writeLine(tempStream, "  @ResponseBody");
-                  writeLine(tempStream, "  @PostMapping(value = \"/" + router + "\")");
-                  writeLine(tempStream, line);
-                  continue;
-                }
+            List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
+            for (String line : lines) {
+              if (line.contains("package")) {
                 writeLine(tempStream, line);
+                writeLine(tempStream, "");
+                writeLine(tempStream, "import " + responseBodyPackageName + ";");
+                writeLine(tempStream, "import " + postMappingPackageName + ";");
+                continue;
               }
-            } catch (IOException e) {
-              e.printStackTrace();
+              if (!("".equals(line) || isEffectiveInterface(line))) {
+                String router = line.trim().replace("(", " ").split(" ")[1];
+                writeLine(tempStream, "  @ResponseBody");
+                writeLine(tempStream, "  @PostMapping(value = \"/" + router + "\")");
+                writeLine(tempStream, line);
+                continue;
+              }
+              writeLine(tempStream, line);
             }
-            tempinterfaceFileName = interfaceFileName;
+            tempInterfaceFileName = interfaceFileName;
             FileWriter fileWriter = new FileWriter(file);
             tempStream.writeTo(fileWriter);
             fileWriter.close();
           }
         }
-        interfaceFileList.remove(tempinterfaceFileName);
+        interfaceFileList.remove(tempInterfaceFileName);
       } catch (IOException e) {
-        e.printStackTrace();
+        LOGGER.error("error modifying content and filePath is {}", file.getAbsolutePath());
       }
     });
   }
 
-  private boolean isEffectiveInterface(String line){
+  private boolean isEffectiveInterface(String line) {
     Pattern pattern = Pattern.compile(ROUTER_REGEX_PATTERN);
     Matcher matcher = pattern.matcher(line);
     return matcher.find();

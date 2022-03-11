@@ -16,7 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 @TestInstance(Lifecycle.PER_CLASS)
-public class ModifyHSFConsumerActiontTest {
+public class ModifyHSFConsumerActionTest {
 
   private static final String BASE_PATH = System.getProperty("user.dir");
 
