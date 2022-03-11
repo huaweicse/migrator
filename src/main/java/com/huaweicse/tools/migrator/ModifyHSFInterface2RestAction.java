@@ -23,7 +23,9 @@ import java.util.regex.Pattern;
 @Component
 public class ModifyHSFInterface2RestAction implements Action {
 
-  private static final String REGEX_PATTERN = "[a-zA-Z]+(.class)";
+  private static final String INTERFACE_REGEX_PATTERN = "[a-zA-Z]+(.class)";
+
+  private static final String ROUTER_REGEX_PATTERN = "[/*{}]";
 
   private static final String LINE_SEPARATOR = "line.separator";
 
@@ -69,7 +71,7 @@ public class ModifyHSFInterface2RestAction implements Action {
         List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
         for (String line : lines) {
           if (line.contains(HSF_PROVIDER)) {
-            Pattern pattern = Pattern.compile(REGEX_PATTERN);
+            Pattern pattern = Pattern.compile(INTERFACE_REGEX_PATTERN);
             Matcher matcher = pattern.matcher(line);
             while (matcher.find()) {
               interfaceFileList.add(matcher.group().replace(".class", ".java"));
@@ -100,8 +102,7 @@ public class ModifyHSFInterface2RestAction implements Action {
                   writeLine(tempStream, "import " + postMappingPackageName + ";");
                   continue;
                 }
-                if (!("".equals(line) || line.contains("interface") || line.contains("{")
-                    || line.contains("}") || line.contains("*") || line.contains("//"))) {
+                if (!("".equals(line) || isEffectiveInterface(line))) {
                   String router = line.trim().replace("(", " ").split(" ")[1];
                   writeLine(tempStream, "  @ResponseBody");
                   writeLine(tempStream, "  @PostMapping(value = \"/" + router + "\")");
@@ -124,6 +125,12 @@ public class ModifyHSFInterface2RestAction implements Action {
         e.printStackTrace();
       }
     });
+  }
+
+  private boolean isEffectiveInterface(String line){
+    Pattern pattern = Pattern.compile(ROUTER_REGEX_PATTERN);
+    Matcher matcher = pattern.matcher(line);
+    return matcher.find();
   }
 
   private void writeLine(CharArrayWriter tempStream, String line) throws IOException {

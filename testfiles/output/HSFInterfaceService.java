@@ -13,7 +13,7 @@ public interface HSFInterfaceService {
   // 单行注释
   @ResponseBody
   @PostMapping(value = "/slComment")
-  Map<String> slComment(List list);
+  List<String> slComment(List list);
 
   /**
    *

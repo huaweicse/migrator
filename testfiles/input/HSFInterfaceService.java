@@ -6,7 +6,7 @@ public interface HSFInterfaceService {
   String hello(String String);
 
   // 单行注释
-  Map<String> slComment(List list);
+  List<String> slComment(List list);
 
   /**
    *
