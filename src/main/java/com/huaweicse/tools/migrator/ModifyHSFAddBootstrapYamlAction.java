@@ -38,9 +38,7 @@ public class ModifyHSFAddBootstrapYamlAction implements Action {
 
   private void addYmlFile(File file) {
     try {
-      // 避免在windows或者linux系统中带来的差异性
-      String originBootstrapContextPath =
-          BASE_PATH + FILE_SEPARATOR + "src" + FILE_SEPARATOR + "main" + FILE_SEPARATOR + "resources";
+      String originBootstrapContextPath = BASE_PATH + FILE_SEPARATOR + "templates";
       FileInputStream fileInputStream = new FileInputStream(
           originBootstrapContextPath + FILE_SEPARATOR + "bootstrap.txt");
       FileUtils.copyInputStreamToFile(fileInputStream, file);
