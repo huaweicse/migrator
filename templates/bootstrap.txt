@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: ${CAS_COMPONENT_NAME} # 微服务名称，默认使用ServiceStage组件名称，建议修改
+  cloud:
+    servicecomb:
+      discovery:
+        appName: ${CAS_APPLICATION_NAME} # 应用名称，默认使用ServiceStage组件名称，建议修改
+        serviceName: ${spring.application.name}
+        address: ${PASS_CSE_SC_ENDPOINT}
+        version: 0.0.1
+      config:
+        serverAddr: ${PASS_CSE_CC_ENDPOINT}
+        serverType: kie
