@@ -6,6 +6,8 @@ public interface HSFInterfaceService {
   // 无参数
   List<String> noArg();
 
+  List<String> str(String string);
+
   // 单行注释
   List<String> slComment(List<String> list);
 
@@ -16,7 +18,7 @@ public interface HSFInterfaceService {
    */
   Map<String> muComment(Map map);
 
-  String mix(String string, Integer num, List<String> stringList);
+  String mix(List<String> stringList, Integer num);
 
   ResultBody single(EntityBody entityBody, Long count, Double num);
 

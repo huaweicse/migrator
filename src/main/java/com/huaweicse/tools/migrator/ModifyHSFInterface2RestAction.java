@@ -54,6 +54,8 @@ public class ModifyHSFInterface2RestAction implements Action {
   @Value("${spring.requestBody.packageName:org.springframework.web.bind.annotation.RequestBody}")
   private String requestBodyPackageName;
 
+  private static final String TEMP_DIR_PATH = System.getProperty("java.io.tmpdir");
+
   @Override
   public void run(String... args) {
     File[] files = allFiles(args[0]);
@@ -155,37 +157,32 @@ public class ModifyHSFInterface2RestAction implements Action {
         .filter(param -> !"".equals(param))
         .collect(Collectors.toList());
     ArrayList<String> params = new ArrayList<>(paramStrings.size());
-    if (paramStrings.size() > 2) {
-      for (int i = 0; i < paramStrings.size(); i++) {
-        String tempParam = paramStrings.get(i);
-        if (i % 2 == 0) {
-          if (isComplexParameter(tempParam)) {
-            params.add("@RequestBody " + tempParam);
-            requestBodyCount++;
-            if (requestBodyCount >= 2) {
-              String methodName = line.trim().substring(line.trim().indexOf(" ") + 1, line.trim().indexOf("("));
-              LOGGER.error("RequestBody too much, need to reconstruct parameters and method name is {} of {}",
-                  methodName, file.getName());
-            }
-          } else {
-            params.add("@RequestParam " + tempParam);
+    for (int i = 0; i < paramStrings.size(); i++) {
+      String tempParam = paramStrings.get(i);
+      if (i % 2 == 0) {
+        if (isComplexParameter(tempParam)) {
+          params.add("@RequestBody " + tempParam);
+          requestBodyCount++;
+          if (requestBodyCount >= 2) {
+            String methodName = line.trim().substring(line.trim().indexOf(" ") + 1, line.trim().indexOf("("));
+            LOGGER.error("RequestBody too much, need to reconstruct parameters and method name is {} of {}",
+                methodName, file.getName());
           }
-          continue;
+        } else {
+          params.add("@RequestParam " + tempParam);
         }
-        params.add(tempParam);
+        continue;
       }
-    } else {
-      params.add("@RequestBody " + paramStrings.get(0));
-      params.add(paramStrings.get(1));
+      params.add(tempParam);
     }
-
+    params.add(String.valueOf(requestBodyCount));
     return params;
   }
 
   private static boolean isComplexParameter(String param) {
     ParamValueType[] values = ParamValueType.values();
     for (ParamValueType value : values) {
-      if (param.equals(value.name()) || param.contains(value.name())) {
+      if (param.equalsIgnoreCase(value.name()) || "int".equals(value.name()) || "char".equals(value.name())) {
         return false;
       }
     }
@@ -196,13 +193,17 @@ public class ModifyHSFInterface2RestAction implements Action {
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append("  @PostMapping(value = \"/")
         .append(router)
-        .append("\", consumes = \"hessian\",")
-        .append(" produces = \"hessian\")");
+        .append("\", consumes = \"x-application/hessian2\",")
+        .append(" produces = \"x-application/hessian2\")");
     return new String(stringBuilder);
   }
 
   private String interfaceInfo(String line, ArrayList<String> paramList) {
     String substring = line.substring(0, line.indexOf("("));
+    if (Integer.parseInt(paramList.get(paramList.size()-1)) > 1){
+      return line;
+    }
+    paramList.remove(paramList.get(paramList.size()-1));
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append(substring)
         .append("(");
@@ -234,11 +235,12 @@ public class ModifyHSFInterface2RestAction implements Action {
 }
 
 enum ParamValueType {
-  String,
+  Byte,
+  Short,
   Integer,
-  Boolean,
   Long,
+  Float,
   Double,
-  List,
-  Map
+  Boolean,
+  Character
 }

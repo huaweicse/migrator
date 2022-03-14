@@ -10,12 +10,16 @@ public interface HSFInterfaceService {
 
   // 无参数
   @ResponseBody
-  @PostMapping(value = "/noArg", consumes = "hessian", produces = "hessian")
+  @PostMapping(value = "/noArg", consumes = "x-application/hessian2", produces = "x-application/hessian2")
   List<String> noArg();
+
+  @ResponseBody
+  @PostMapping(value = "/str", consumes = "x-application/hessian2", produces = "x-application/hessian2")
+  List<String> str(@RequestBody String string);
 
   // 单行注释
   @ResponseBody
-  @PostMapping(value = "/slComment", consumes = "hessian", produces = "hessian")
+  @PostMapping(value = "/slComment", consumes = "x-application/hessian2", produces = "x-application/hessian2")
   List<String> slComment(@RequestBody List<String> list);
 
   /**
@@ -24,19 +28,19 @@ public interface HSFInterfaceService {
    * @return
    */
   @ResponseBody
-  @PostMapping(value = "/muComment", consumes = "hessian", produces = "hessian")
+  @PostMapping(value = "/muComment", consumes = "x-application/hessian2", produces = "x-application/hessian2")
   Map<String> muComment(@RequestBody Map map);
 
   @ResponseBody
-  @PostMapping(value = "/mix", consumes = "hessian", produces = "hessian")
-  String mix(@RequestParam String string, @RequestParam Integer num, @RequestParam List<String> stringList);
+  @PostMapping(value = "/mix", consumes = "x-application/hessian2", produces = "x-application/hessian2")
+  String mix(@RequestBody List<String> stringList, @RequestParam Integer num);
 
   @ResponseBody
-  @PostMapping(value = "/single", consumes = "hessian", produces = "hessian")
+  @PostMapping(value = "/single", consumes = "x-application/hessian2", produces = "x-application/hessian2")
   ResultBody single(@RequestBody EntityBody entityBody, @RequestParam Long count, @RequestParam Double num);
 
   // 该情况下打印error日志，稍后手动进行参数重构
   @ResponseBody
-  @PostMapping(value = "/manyBody", consumes = "hessian", produces = "hessian")
-  ResultBody manyBody(@RequestBody BodyOne bodyOne, @RequestBody BodyTwo bodyTwo, @RequestParam Long count, @RequestParam Double num);
+  @PostMapping(value = "/manyBody", consumes = "x-application/hessian2", produces = "x-application/hessian2")
+  ResultBody manyBody(BodyOne bodyOne, BodyTwo bodyTwo, Long count, Double num);
 }
