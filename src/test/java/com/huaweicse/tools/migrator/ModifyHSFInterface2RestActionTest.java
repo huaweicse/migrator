@@ -25,9 +25,9 @@ public class ModifyHSFInterface2RestActionTest {
 
   @Test
   public void testInterface2Rest() throws IOException {
-    String localBaseFilePath = BASE_PATH + fileSeparator + "testfiles" + fileSeparator;
+    String localBaseFilePath = BASE_PATH + fileSeparator + "testfiles";
     String tempBaseFilePath = TEMP_DIR_PATH + fileSeparator + "input";
-    FileUtils.copyDirectoryToDirectory(new File(localBaseFilePath + "input"),
+    FileUtils.copyDirectoryToDirectory(new File(localBaseFilePath + fileSeparator + "input"),
         new File(TEMP_DIR_PATH));
     modifyHSFInterface2RestAction.run(tempBaseFilePath);
     String fileName = "HSFInterfaceService.java";

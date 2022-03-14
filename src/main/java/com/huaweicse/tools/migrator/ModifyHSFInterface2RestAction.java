@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * 功能描述：
@@ -46,6 +47,12 @@ public class ModifyHSFInterface2RestAction implements Action {
 
   @Value("${spring.postMapping.packageName:org.springframework.web.bind.annotation.PostMapping}")
   private String postMappingPackageName;
+
+  @Value("${spring.requestParam.packageName:org.springframework.web.bind.annotation.RequestParam}")
+  private String requestParamPackageName;
+
+  @Value("${spring.requestBody.packageName:org.springframework.web.bind.annotation.RequestBody}")
+  private String requestBodyPackageName;
 
   @Override
   public void run(String... args) {
@@ -92,6 +99,9 @@ public class ModifyHSFInterface2RestAction implements Action {
   private void replaceContent() {
     fileList.forEach(file -> {
       try {
+        if (interfaceFileList.size() == 0) {
+          return;
+        }
         CharArrayWriter tempStream = new CharArrayWriter();
         String tempInterfaceFileName = null;
         for (String interfaceFileName : interfaceFileList) {
@@ -103,13 +113,20 @@ public class ModifyHSFInterface2RestAction implements Action {
                 writeLine(tempStream, "");
                 writeLine(tempStream, "import " + responseBodyPackageName + ";");
                 writeLine(tempStream, "import " + postMappingPackageName + ";");
+                writeLine(tempStream, "import " + requestParamPackageName + ";");
+                writeLine(tempStream, "import " + requestBodyPackageName + ";");
                 continue;
               }
               if (!("".equals(line) || isEffectiveInterface(line))) {
                 String router = line.trim().replace("(", " ").split(" ")[1];
                 writeLine(tempStream, "  @ResponseBody");
-                writeLine(tempStream, "  @PostMapping(value = \"/" + router + "\")");
-                writeLine(tempStream, line);
+                writeLine(tempStream, postMappingString(router));
+                ArrayList<String> paramList = paramHandling(line, file);
+                if (paramList == null) {
+                  writeLine(tempStream, line);
+                } else {
+                  writeLine(tempStream, interfaceInfo(line, paramList));
+                }
                 continue;
               }
               writeLine(tempStream, line);
@@ -127,6 +144,83 @@ public class ModifyHSFInterface2RestAction implements Action {
     });
   }
 
+  private static ArrayList<String> paramHandling(String line, File file) {
+    String[] tempParams = line.substring(line.indexOf("(") + 1, line.lastIndexOf(")"))
+        .replaceAll(",", " ").split(" ");
+    if (tempParams.length == 1) {
+      return null;
+    }
+    int requestBodyCount = 0;
+    List<String> paramStrings = Arrays.stream(tempParams)
+        .filter(param -> !"".equals(param))
+        .collect(Collectors.toList());
+    ArrayList<String> params = new ArrayList<>(paramStrings.size());
+    if (paramStrings.size() > 2) {
+      for (int i = 0; i < paramStrings.size(); i++) {
+        String tempParam = paramStrings.get(i);
+        if (i % 2 == 0) {
+          if (isComplexParameter(tempParam)) {
+            params.add("@RequestBody " + tempParam);
+            requestBodyCount++;
+            if (requestBodyCount >= 2) {
+              String methodName = line.trim().substring(line.trim().indexOf(" ") + 1, line.trim().indexOf("("));
+              LOGGER.error("RequestBody too much, need to reconstruct parameters and method name is {} of {}",
+                  methodName, file.getName());
+            }
+          } else {
+            params.add("@RequestParam " + tempParam);
+          }
+          continue;
+        }
+        params.add(tempParam);
+      }
+    } else {
+      params.add("@RequestBody " + paramStrings.get(0));
+      params.add(paramStrings.get(1));
+    }
+
+    return params;
+  }
+
+  private static boolean isComplexParameter(String param) {
+    ParamValueType[] values = ParamValueType.values();
+    for (ParamValueType value : values) {
+      if (param.equals(value.name()) || param.contains(value.name())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private String postMappingString(String router) {
+    StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append("  @PostMapping(value = \"/")
+        .append(router)
+        .append("\", consumes = \"hessian\",")
+        .append(" produces = \"hessian\")");
+    return new String(stringBuilder);
+  }
+
+  private String interfaceInfo(String line, ArrayList<String> paramList) {
+    String substring = line.substring(0, line.indexOf("("));
+    StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append(substring)
+        .append("(");
+    for (int i = 0; i < paramList.size(); i++) {
+      if (i % 2 == 0) {
+        stringBuilder.append(paramList.get(i)).append(" ");
+        continue;
+      }
+      if (i == (paramList.size() - 1)) {
+        stringBuilder.append(paramList.get(i));
+        continue;
+      }
+      stringBuilder.append(paramList.get(i)).append(", ");
+    }
+    stringBuilder.append(");");
+    return new String(stringBuilder);
+  }
+
   private boolean isEffectiveInterface(String line) {
     Pattern pattern = Pattern.compile(ROUTER_REGEX_PATTERN);
     Matcher matcher = pattern.matcher(line);
@@ -137,4 +231,14 @@ public class ModifyHSFInterface2RestAction implements Action {
     tempStream.write(line);
     tempStream.append(System.getProperty(LINE_SEPARATOR));
   }
+}
+
+enum ParamValueType {
+  String,
+  Integer,
+  Boolean,
+  Long,
+  Double,
+  List,
+  Map
 }
