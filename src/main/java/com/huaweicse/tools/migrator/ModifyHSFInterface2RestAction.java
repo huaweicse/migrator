@@ -170,7 +170,7 @@ public class ModifyHSFInterface2RestAction implements Action {
                 methodName, file.getName());
           }
         } else {
-          params.add("@RequestParam " + tempParam);
+          params.add("@RequestParam(value=\"" + paramStrings.get(i+1) + "\") " + tempParam);
         }
         continue;
       }

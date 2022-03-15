@@ -10,7 +10,7 @@ public interface HSFInterfaceService {
 
   @ResponseBody
   @PostMapping(value = "/hello")
-  String hello(@RequestParam String str);
+  String hello(@RequestParam(value="str") String str);
 
   // 无参数
   @ResponseBody
@@ -19,7 +19,7 @@ public interface HSFInterfaceService {
 
   @ResponseBody
   @PostMapping(value = "/str", produces = "x-application/hessian2")
-  List<String> str(@RequestParam String string);
+  List<String> str(@RequestParam(value="string") String string);
 
   // 单行注释
   @ResponseBody
@@ -37,11 +37,11 @@ public interface HSFInterfaceService {
 
   @ResponseBody
   @PostMapping(value = "/mix", consumes = "x-application/hessian2")
-  String mix(@RequestBody List<String> stringList, @RequestParam Integer num);
+  String mix(@RequestBody List<String> stringList, @RequestParam(value="num") Integer num);
 
   @ResponseBody
   @PostMapping(value = "/single", produces = "x-application/hessian2", consumes = "x-application/hessian2")
-  ResultBody single(@RequestBody EntityBody entityBody, @RequestParam Long count, @RequestParam Double num);
+  ResultBody single(@RequestBody EntityBody entityBody, @RequestParam(value="count") Long count, @RequestParam(value="num") Double num);
 
   // 该情况下打印error日志，稍后手动进行参数重构
   @ResponseBody
