@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class ModifyHSFProviderActionTest {
+public class ModifyHSFInterface2RestActionTest {
 
   private static final String BASE_PATH = System.getProperty("user.dir");
 
@@ -21,19 +21,18 @@ public class ModifyHSFProviderActionTest {
   private String fileSeparator = File.separator;
 
   @Autowired
-  private ModifyHSFProviderAction modifyHSFProviderAction;
+  private ModifyHSFInterface2RestAction modifyHSFInterface2RestAction;
 
   @Test
-  public void testModifyHSFProviderAction() throws IOException {
+  public void testInterface2Rest() throws IOException {
     String localBaseFilePath = BASE_PATH + fileSeparator + "testfiles";
-    String tempBaseFilePath = TEMP_DIR_PATH + "input";
+    String tempBaseFilePath = TEMP_DIR_PATH + fileSeparator + "input";
     FileUtils.copyDirectoryToDirectory(new File(localBaseFilePath + fileSeparator + "input"),
         new File(TEMP_DIR_PATH));
-    modifyHSFProviderAction.run(tempBaseFilePath);
-    String fileName = "HSFInterfaceServiceImpl.java";
+    modifyHSFInterface2RestAction.run(tempBaseFilePath);
+    String fileName = "HSFInterfaceService.java";
     Assert.assertTrue(IOUtils.contentEquals(
         new FileInputStream(localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName),
         new FileInputStream(tempBaseFilePath + fileSeparator + fileName)));
   }
-
 }

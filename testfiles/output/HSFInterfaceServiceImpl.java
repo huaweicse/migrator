@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@RequestMapping("hSFInterfaceService")
+@RequestMapping("/hSFInterfaceService")
 public class HSFInterfaceServiceImpl implements HSFInterfaceService {
 
   @Override
@@ -15,4 +15,3 @@ public class HSFInterfaceServiceImpl implements HSFInterfaceService {
   }
 
 }
-

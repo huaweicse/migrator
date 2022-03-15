@@ -21,8 +21,6 @@
     <fastJson.version>1.2.79</fastJson.version>
     <commons-io.version>2.11.0</commons-io.version>
     <junit.version>4.13.1</junit.version>
-    <maven.version>3.6.0</maven.version>
-    <eclipse-astparser.version>8.1</eclipse-astparser.version>
   </properties>
 
   <dependencies>
@@ -39,16 +37,6 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>${commons-io.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.maven</groupId>
-      <artifactId>maven-model</artifactId>
-      <version>${maven.version}</version>
-    </dependency>
-    <dependency>
-    <groupId>de.defmacro</groupId>
-    <artifactId>eclipse-astparser</artifactId>
-    <version>${eclipse-astparser.version}</version>
     </dependency>
 
     <dependency>
