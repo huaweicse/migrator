@@ -1,12 +1,11 @@
 package com.huaweicse.tools.migrator;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,24 +15,38 @@ public class ModifyHSFProviderActionTest {
 
   private static final String BASE_PATH = System.getProperty("user.dir");
 
-  private static final String TEMP_DIR_PATH = System.getProperty("java.io.tmpdir");
+  private String TEMP_DIR_PATH;
 
   private String fileSeparator = File.separator;
 
   @Autowired
   private ModifyHSFProviderAction modifyHSFProviderAction;
 
-  @Test
-  public void testModifyHSFProviderAction() throws IOException {
-    String localBaseFilePath = BASE_PATH + fileSeparator + "testfiles";
-    String tempBaseFilePath = TEMP_DIR_PATH + "input";
-    FileUtils.copyDirectoryToDirectory(new File(localBaseFilePath + fileSeparator + "input"),
+  @BeforeEach
+  public void setUp() throws Exception {
+    TEMP_DIR_PATH = System.getProperty("java.io.tmpdir")
+        + File.separator + Math.abs(new Random().nextInt());
+
+    FileUtils.copyDirectoryToDirectory(new File(BASE_PATH + fileSeparator + "testfiles" + fileSeparator + "input"),
         new File(TEMP_DIR_PATH));
+  }
+
+  @AfterEach
+  public void tearDown() throws Exception  {
+    FileUtils.deleteDirectory(new File(TEMP_DIR_PATH));
+  }
+
+
+  @Test
+  public void testModifyHSFProviderAction() throws Exception {
+    String localBaseFilePath = BASE_PATH + fileSeparator + "testfiles";
+    String tempBaseFilePath = TEMP_DIR_PATH + fileSeparator + "input";
     modifyHSFProviderAction.run(tempBaseFilePath);
+
     String fileName = "HSFInterfaceServiceImpl.java";
-    Assert.assertTrue(IOUtils.contentEquals(
-        new FileInputStream(localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName),
-        new FileInputStream(tempBaseFilePath + fileSeparator + fileName)));
+    Utils.assertFileContentEquals(
+       localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+        tempBaseFilePath + fileSeparator + fileName);
   }
 
 }

@@ -11,7 +11,7 @@ public class HSFInterfaceServiceImpl implements HSFInterfaceService {
 
   @Override
   public String hello(String name) {
-    return string;
+    return name;
   }
 
 }
