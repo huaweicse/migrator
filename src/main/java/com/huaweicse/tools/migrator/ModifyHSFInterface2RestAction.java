@@ -120,13 +120,14 @@ public class ModifyHSFInterface2RestAction implements Action {
                 continue;
               }
               if (!("".equals(line) || isEffectiveInterface(line))) {
-                String router = line.trim().replace("(", " ").split(" ")[1];
+                String[] strings = line.trim().replace("(", " ").split(" ");
                 writeLine(tempStream, "  @ResponseBody");
-                writeLine(tempStream, postMappingString(router));
                 ArrayList<String> paramList = paramHandling(line, file);
                 if (paramList == null) {
+                  writeLine(tempStream, postMappingString(strings[0], strings[1], "0"));
                   writeLine(tempStream, line);
                 } else {
+                  writeLine(tempStream, postMappingString(strings[0], strings[1], paramList.get(paramList.size() - 1)));
                   writeLine(tempStream, interfaceInfo(line, paramList));
                 }
                 continue;
@@ -160,7 +161,7 @@ public class ModifyHSFInterface2RestAction implements Action {
     for (int i = 0; i < paramStrings.size(); i++) {
       String tempParam = paramStrings.get(i);
       if (i % 2 == 0) {
-        if (isComplexParameter(tempParam)) {
+        if (isComplexType(tempParam)) {
           params.add("@RequestBody " + tempParam);
           requestBodyCount++;
           if (requestBodyCount >= 2) {
@@ -179,7 +180,7 @@ public class ModifyHSFInterface2RestAction implements Action {
     return params;
   }
 
-  private static boolean isComplexParameter(String param) {
+  private static boolean isComplexType(String param) {
     ParamValueType[] values = ParamValueType.values();
     for (ParamValueType value : values) {
       if (param.equalsIgnoreCase(value.name()) || "int".equals(value.name()) || "char".equals(value.name())) {
@@ -189,21 +190,27 @@ public class ModifyHSFInterface2RestAction implements Action {
     return true;
   }
 
-  private String postMappingString(String router) {
+  private String postMappingString(String resultTypeValue, String router, String bodyCount) {
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append("  @PostMapping(value = \"/")
         .append(router)
-        .append("\", consumes = \"x-application/hessian2\",")
-        .append(" produces = \"x-application/hessian2\")");
+        .append("\"");
+    if (isComplexType(resultTypeValue)) {
+      stringBuilder.append(", produces = \"x-application/hessian2\"");
+    }
+    if (Integer.parseInt(bodyCount) >= 1) {
+      stringBuilder.append(", consumes = \"x-application/hessian2\"");
+    }
+    stringBuilder.append(")");
     return new String(stringBuilder);
   }
 
   private String interfaceInfo(String line, ArrayList<String> paramList) {
     String substring = line.substring(0, line.indexOf("("));
-    if (Integer.parseInt(paramList.get(paramList.size()-1)) > 1){
+    if (Integer.parseInt(paramList.get(paramList.size() - 1)) > 1) {
       return line;
     }
-    paramList.remove(paramList.get(paramList.size()-1));
+    paramList.remove(paramList.get(paramList.size() - 1));
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append(substring)
         .append("(");
@@ -235,6 +242,7 @@ public class ModifyHSFInterface2RestAction implements Action {
 }
 
 enum ParamValueType {
+  String,
   Byte,
   Short,
   Integer,

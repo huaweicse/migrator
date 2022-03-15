@@ -3,6 +3,8 @@ package com.huaweicse.tools.migrator;
 
 public interface HSFInterfaceService {
 
+  String hello(String str);
+
   // 无参数
   List<String> noArg();
 
