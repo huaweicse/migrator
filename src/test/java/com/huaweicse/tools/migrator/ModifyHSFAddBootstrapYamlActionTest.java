@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class ModifyHSFAddBootstrapYamlActiontTest {
+public class ModifyHSFAddBootstrapYamlActionTest {
 
   private static final String BASE_PATH = System.getProperty("user.dir");
 
