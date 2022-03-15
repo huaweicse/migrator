@@ -54,8 +54,6 @@ public class ModifyHSFInterface2RestAction implements Action {
   @Value("${spring.requestBody.packageName:org.springframework.web.bind.annotation.RequestBody}")
   private String requestBodyPackageName;
 
-  private static final String TEMP_DIR_PATH = System.getProperty("java.io.tmpdir");
-
   @Override
   public void run(String... args) {
     File[] files = allFiles(args[0]);
