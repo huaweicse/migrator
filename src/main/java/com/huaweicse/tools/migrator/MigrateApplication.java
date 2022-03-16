@@ -5,18 +5,21 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 
 @SpringBootApplication
-public class MigratorApplication implements CommandLineRunner {
+public class MigrateApplication implements CommandLineRunner {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(MigratorApplication.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MigrateApplication.class);
 
   public static void main(String[] args) {
-    SpringApplication.run(MigratorApplication.class, args);
+    SpringApplication springApplication = new SpringApplication(MigrateApplication.class);
+    springApplication.setBannerMode(Mode.OFF);
+    springApplication.run(args);
   }
 
   @Autowired
@@ -25,7 +28,7 @@ public class MigratorApplication implements CommandLineRunner {
   @Override
   public void run(String... args) {
     Map<String, Action> beansOfType = applicationContext.getBeansOfType(Action.class);
-    if (args.length <= 0) {
+    if (args.length < 2) {
       printUsage(beansOfType);
       return;
     }
@@ -34,7 +37,8 @@ public class MigratorApplication implements CommandLineRunner {
       printUsage(beansOfType);
       return;
     }
-    action.run(args);
+    action.run(args[1]);
+    System.out.println("MigrateApplication run finished successful.");
   }
 
   private Action targetAction(String arg, Map<String, Action> beansOfType) {
