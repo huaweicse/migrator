@@ -3,9 +3,7 @@ package com.huaweicse.tools.migrator;
 import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -97,7 +95,7 @@ public class ModifyHSFConsumerAction implements Action {
           tempStream.write(line);
           tempStream.append(System.getProperty(LINE_SEPARATOR));
         }
-        OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), Charset.forName("UTF-8"));
+        OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
         tempStream.writeTo(fileWriter);
         fileWriter.close();
       } catch (Exception e) {

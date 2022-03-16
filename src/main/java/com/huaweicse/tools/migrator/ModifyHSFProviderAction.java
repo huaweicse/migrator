@@ -2,7 +2,8 @@ package com.huaweicse.tools.migrator;
 
 import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -95,7 +96,7 @@ public class ModifyHSFProviderAction implements Action {
           tempStream.write(line);
           tempStream.append(System.getProperty(LINE_SEPARATOR));
         }
-        FileWriter fileWriter = new FileWriter(file);
+        OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
         tempStream.writeTo(fileWriter);
         fileWriter.close();
       } catch (Exception e) {
