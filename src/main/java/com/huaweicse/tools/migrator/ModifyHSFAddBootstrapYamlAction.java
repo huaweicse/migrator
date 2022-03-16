@@ -3,7 +3,7 @@ package com.huaweicse.tools.migrator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -21,26 +21,27 @@ public class ModifyHSFAddBootstrapYamlAction implements Action {
 
   @Override
   public void run(String... args) {
+    addYaml(new File(args[0]));
+
     File[] files = allFiles(args[0]);
     if (files == null){
       return;
     }
-    addYaml(files);
+    Stream.of(files).forEach(item -> addYaml(item));
   }
 
-  private void addYaml(File[] files) {
-    Arrays.stream(files).forEach(file -> {
-      if (file.isDirectory() && "resources".equals(file.getName())) {
-        addYmlFile(new File(file.getAbsolutePath() + FILE_SEPARATOR + "bootstrap.yml"));
-      }
-    });
+  private void addYaml(File file) {
+    File child = new File(file, "src" + FILE_SEPARATOR + "main" + FILE_SEPARATOR + "resources");
+    if(child.isDirectory()) {
+      addYmlFile(new File(child,"bootstrap.yml"));
+    }
   }
 
   private void addYmlFile(File file) {
     try {
       String originBootstrapContextPath = BASE_PATH + FILE_SEPARATOR + "templates";
       FileInputStream fileInputStream = new FileInputStream(
-          originBootstrapContextPath + FILE_SEPARATOR + "bootstrap.txt");
+          originBootstrapContextPath + FILE_SEPARATOR + "bootstrap.yml");
       FileUtils.copyInputStreamToFile(fileInputStream, file);
     } catch (IOException ex) {
       // 如果添加配置文件失败，则后续进行手动添加

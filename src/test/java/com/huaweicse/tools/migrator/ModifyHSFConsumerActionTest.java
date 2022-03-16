@@ -3,11 +3,13 @@ package com.huaweicse.tools.migrator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -20,7 +22,7 @@ public class ModifyHSFConsumerActionTest {
 
   private static final String BASE_PATH = System.getProperty("user.dir");
 
-  private static final String TEMP_DIR_PATH = System.getProperty("java.io.tmpdir");
+  private String TEMP_DIR_PATH;
 
   private String fileSeparator = File.separator;
 
@@ -30,31 +32,44 @@ public class ModifyHSFConsumerActionTest {
   private ModifyHSFConsumerAction modifyHSFConsumerAction;
 
 
-  // 初始化基础路径及运行内容修改逻辑
-  @BeforeAll
-  public void init() throws IOException {
-    localFileBasePath = BASE_PATH + fileSeparator + "testfiles";
-    FileUtils.copyDirectoryToDirectory(new File(localFileBasePath + fileSeparator + "input"),
+  @BeforeEach
+  public void setUp() throws Exception {
+    TEMP_DIR_PATH = System.getProperty("java.io.tmpdir")
+        + File.separator + Math.abs(new Random().nextInt());
+
+    FileUtils.copyDirectoryToDirectory(new File(BASE_PATH + fileSeparator + "testfiles" + fileSeparator + "input"),
         new File(TEMP_DIR_PATH));
-    modifyHSFConsumerAction.run(TEMP_DIR_PATH + fileSeparator + "input");
+  }
+
+  @AfterEach
+  public void tearDown() throws Exception  {
+    FileUtils.deleteDirectory(new File(TEMP_DIR_PATH));
   }
 
   // 规范开发风格文件测试
   @Test
-  public void testModifyHSFConsumerActionStandardConfig() throws IOException {
+  public void testModifyHSFConsumerActionStandardConfig() throws Exception {
+    localFileBasePath = BASE_PATH + fileSeparator + "testfiles";
+    FileUtils.copyDirectoryToDirectory(new File(localFileBasePath + fileSeparator + "input"),
+        new File(TEMP_DIR_PATH));
+    modifyHSFConsumerAction.run(TEMP_DIR_PATH + fileSeparator + "input");
+
     String fileName = "HSFConsumerStandardConfig.java";
-    Assert.assertTrue(
-        IOUtils.contentEquals(new FileInputStream(genFilePath(TEMP_DIR_PATH, "input", fileName)),
-            new FileInputStream(genFilePath(localFileBasePath, "output", fileName))));
+    Utils.assertFileContentEquals(genFilePath(TEMP_DIR_PATH, "input", fileName),
+        genFilePath(localFileBasePath, "output", fileName));
   }
 
   // 非规范开发风格文件测试
   @Test
-  public void testModifyHSFConsumerActionNonstandardConfig() throws IOException {
+  public void testModifyHSFConsumerActionNonstandardConfig() throws Exception {
+    localFileBasePath = BASE_PATH + fileSeparator + "testfiles";
+    FileUtils.copyDirectoryToDirectory(new File(localFileBasePath + fileSeparator + "input"),
+        new File(TEMP_DIR_PATH));
+    modifyHSFConsumerAction.run(TEMP_DIR_PATH + fileSeparator + "input");
+
     String fileName = "HSFConsumerNonstandardConfig.java";
-    Assert.assertTrue(
-        IOUtils.contentEquals(new FileInputStream(genFilePath(TEMP_DIR_PATH, "input", fileName)),
-            new FileInputStream(genFilePath(localFileBasePath, "output", fileName))));
+    Utils.assertFileContentEquals(genFilePath(TEMP_DIR_PATH, "input", fileName),
+        genFilePath(localFileBasePath, "output", fileName));
   }
 
   private String genFilePath(String fileBasePath, String type, String fileName) {

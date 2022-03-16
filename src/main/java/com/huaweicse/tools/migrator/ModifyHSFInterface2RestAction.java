@@ -8,8 +8,11 @@ import org.springframework.stereotype.Component;
 
 import java.io.CharArrayWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -133,7 +136,7 @@ public class ModifyHSFInterface2RestAction implements Action {
               writeLine(tempStream, line);
             }
             tempInterfaceFileName = interfaceFileName;
-            FileWriter fileWriter = new FileWriter(file);
+            OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), Charset.forName("UTF-8"));
             tempStream.writeTo(fileWriter);
             fileWriter.close();
           }
