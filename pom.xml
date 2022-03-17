@@ -21,6 +21,7 @@
     <fastJson.version>1.2.79</fastJson.version>
     <commons-io.version>2.11.0</commons-io.version>
     <junit.version>4.13.1</junit.version>
+    <maven-model.version>3.8.4</maven-model.version>
   </properties>
 
   <dependencies>
@@ -37,6 +38,11 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>${commons-io.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-model</artifactId>
+      <version>${maven-model.version}</version>
     </dependency>
 
     <dependency>

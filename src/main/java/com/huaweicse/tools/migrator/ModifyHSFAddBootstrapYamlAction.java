@@ -24,7 +24,7 @@ public class ModifyHSFAddBootstrapYamlAction implements Action {
   public static final String BASE_PATH = System.getProperty("user.dir");
 
   @Override
-  public void run(String... args) throws Exception {
+  public void run(String... args) {
     File folder = new File(args[0]);
     addYaml(folder);
 
@@ -32,7 +32,7 @@ public class ModifyHSFAddBootstrapYamlAction implements Action {
     if (files == null){
       return;
     }
-    Stream.of(files).forEach(item -> addYaml(item));
+    Stream.of(files).forEach(this::addYaml);
   }
 
   private void addYaml(File file) {

@@ -78,6 +78,7 @@ public class ModifyHSFProviderAction extends FileAction {
             }
             tempStream.write("@RestController");
             tempStream.append(System.getProperty(LINE_SEPARATOR));
+            assert tempRouter != null;
             tempStream.write(
                 "@RequestMapping(\"/" + tempRouter.substring(0, 1).toLowerCase() + tempRouter.substring(1) + "\")");
             tempStream.append(System.getProperty(LINE_SEPARATOR));
