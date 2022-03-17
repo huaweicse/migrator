@@ -1,17 +1,12 @@
 package com.huaweicse.tools.migrator;
 
-import java.io.File;
-
 public interface Action {
+  String ERROR_MESSAGE = "Manual processing is required. Cause is [{}]."
+      + "File is [{}]. Line is [{}]";
 
   default String name() {
     return this.getClass().getSimpleName();
   }
 
-  default File[] allFiles(String... args) {
-    File fileCatalogue = new File(args[0]);
-    return fileCatalogue.listFiles();
-  }
-
-  void run(String... args);
+  void run(String... args) throws Exception;
 }

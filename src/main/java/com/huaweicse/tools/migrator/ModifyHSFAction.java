@@ -26,7 +26,7 @@ public class ModifyHSFAction implements Action {
   }
 
   @Override
-  public void run(String... args) {
+  public void run(String... args) throws Exception {
     Action[] actions = new Action[] {modifyHSFInterface2RestAction, modifyHSFProviderAction
         , modifyHSFConsumerAction, modifyHSFAddBootstrapYamlAction};
     for (Action action : actions) {
