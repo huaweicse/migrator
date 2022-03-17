@@ -1,0 +1,78 @@
+{
+    "properties" :  [
+        {
+            "sign" :  "delete",
+            "data" : [
+                { 
+                    "artifactId" : "pandora-boot.version"
+                }
+  			    ]
+        },
+        {
+            "sign" : "add",
+            "data" :  [
+                   { 
+                       "label" :  "spring-cloud.version",
+                       "value" : "2020.0.3"
+                   },
+                   {   "label" :  "spring-cloud-huawei.version",
+                       "value" : "1.8.0-2020.x"
+                   }
+			      ]
+        }
+    ],
+    "dependencyManagement.dependencies" :  [
+        {
+            "sign" :  "delete",
+            "data" :  [
+                {  
+                    "artifactId" : "pandora-boot-starter-bom"
+                }
+  			    ]
+        },
+        {
+            "sign" :  "add",
+            "data" :  [
+                   { 
+                       "groupId" :  "com.huaweicloud",
+                       "artifactId" : "spring-cloud-huawei-bom",
+                       "version" : "${spring-cloud-huawei.version}",
+                       "type" : "pom",
+                       "scope" : "import"
+                   },
+                   { 
+                       "groupId" :  "org.springframework.cloud",
+                       "artifactId" : "spring-cloud-dependencies",
+                       "version" : "${spring-cloud.version}",
+                       "type" : "pom",
+                       "scope" : "import"
+                   }
+			      ]
+        }
+    ],
+	"dependencies" : [
+        {
+            "sign" :  "delete",
+            "data" :  [
+                { 
+                    "artifactId" : "pandora-hsf-spring-boot-starter"
+                }
+  			    ]
+        },
+        {
+            "sign" :  "add",
+            "data" :  [
+                   { 
+                       "groupId" :  "com.huaweicloud",
+                       "artifactId" : "spring-cloud-starter-huawei-service-engine",
+                       "version" : ""
+                   },
+                   { 
+                       "groupId" :  "org.springframework.cloud",
+                       "artifactId" : "spring-cloud-starter-openfeign",
+                       "version" : ""
+                   }
+			      ]
+        }
+    ]
+}
