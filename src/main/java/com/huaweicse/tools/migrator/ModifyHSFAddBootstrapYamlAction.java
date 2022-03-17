@@ -10,6 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+/**
+ * 功能描述：
+ *   在项目的 src/main/resources 目录下添加 bootstrap.yml 文件。
+ */
 @Component
 public class ModifyHSFAddBootstrapYamlAction implements Action {
 
@@ -20,10 +24,11 @@ public class ModifyHSFAddBootstrapYamlAction implements Action {
   public static final String BASE_PATH = System.getProperty("user.dir");
 
   @Override
-  public void run(String... args) {
-    addYaml(new File(args[0]));
+  public void run(String... args) throws Exception {
+    File folder = new File(args[0]);
+    addYaml(folder);
 
-    File[] files = allFiles(args[0]);
+    File[] files = folder.listFiles();
     if (files == null){
       return;
     }

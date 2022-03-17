@@ -1,11 +1,5 @@
 package com.huaweicse.tools.migrator;
 
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,13 +13,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 /**
  * 功能描述：
  * 扫描目录下面的所有JAVA文件，首先扫描出包含 @HSFProvider 标签的文件，并从中解析出需要处理的 JAVA interface文件，
  * 然后将 interface 文件修改为 REST 风格。 替换过程中，会替换 import，一并修改 import。
  */
 @Component
-public class ModifyHSFInterface2RestAction implements Action {
+public class ModifyHSFInterface2RestAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFInterface2RestAction.class);
 
@@ -34,12 +34,6 @@ public class ModifyHSFInterface2RestAction implements Action {
   private static final String ROUTER_REGEX_PATTERN = "[/*{}]";
 
   private static final String LINE_SEPARATOR = "line.separator";
-
-  // 保存扫描到的所有java文件
-  private ArrayList<File> fileList = new ArrayList<>();
-
-  // 保存扫描到的需要改动的接口java文件名称
-  private ArrayList<String> interfaceFileList = new ArrayList<>();
 
   private static final String HSF_PROVIDER = "@HSFProvider";
 
@@ -56,49 +50,37 @@ public class ModifyHSFInterface2RestAction implements Action {
   private String requestBodyPackageName;
 
   @Override
-  public void run(String... args) {
-    File[] files = allFiles(args[0]);
-    if (files == null) {
-      return;
-    }
-    filesAdd(files);
-    filterInterfaceFile();
-    replaceContent();
+  public void run(String... args) throws Exception {
+    List<File> acceptedFiles = acceptedFiles(args[0]);
+    List<String> interfaceFileList = filterInterfaceFile(acceptedFiles);
+    replaceContent(acceptedFiles, interfaceFileList);
   }
 
-  private void filesAdd(File[] files) {
-    Arrays.stream(files).forEach(file -> {
-      if (file.isFile() && file.getName().endsWith(".java")) {
-        fileList.add(file);
-      }
-      if (file.isDirectory()) {
-        filesAdd(file.listFiles());
-      }
-    });
+  @Override
+  protected boolean isAcceptedFile(File file) throws IOException {
+    return file.getName().endsWith(".java");
   }
 
-  private void filterInterfaceFile() {
-    for (File file : fileList) {
-      try {
-        List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
-        for (String line : lines) {
-          if (line.contains(HSF_PROVIDER)) {
-            Pattern pattern = Pattern.compile(INTERFACE_REGEX_PATTERN);
-            Matcher matcher = pattern.matcher(line);
-            while (matcher.find()) {
-              interfaceFileList.add(matcher.group().replace(".class", ".java"));
-            }
-            break;
+  private List<String> filterInterfaceFile(List<File> acceptedFiles) throws IOException {
+    List<String> interfaceFileList = new ArrayList<>();
+    for (File file : acceptedFiles) {
+      List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
+      for (String line : lines) {
+        if (line.contains(HSF_PROVIDER)) {
+          Pattern pattern = Pattern.compile(INTERFACE_REGEX_PATTERN);
+          Matcher matcher = pattern.matcher(line);
+          while (matcher.find()) {
+            interfaceFileList.add(matcher.group().replace(".class", ".java"));
           }
+          break;
         }
-      } catch (IOException e) {
-        LOGGER.error("error filtering interface file and filePath is {}", file.getAbsolutePath());
       }
     }
+    return interfaceFileList;
   }
 
-  private void replaceContent() {
-    fileList.forEach(file -> {
+  private void replaceContent(List<File> acceptedFiles, List<String> interfaceFileList) {
+    acceptedFiles.forEach(file -> {
       try {
         if (interfaceFileList.size() == 0) {
           return;
@@ -169,7 +151,7 @@ public class ModifyHSFInterface2RestAction implements Action {
                 methodName, file.getName());
           }
         } else {
-          params.add("@RequestParam(value=\"" + paramStrings.get(i+1) + "\") " + tempParam);
+          params.add("@RequestParam(value=\"" + paramStrings.get(i + 1) + "\") " + tempParam);
         }
         continue;
       }

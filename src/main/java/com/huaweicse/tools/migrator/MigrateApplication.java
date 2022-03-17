@@ -37,8 +37,12 @@ public class MigrateApplication implements CommandLineRunner {
       printUsage(beansOfType);
       return;
     }
-    action.run(args[1]);
-    System.out.println("MigrateApplication run finished successful.");
+    try {
+      action.run(args[1]);
+    } catch (Exception e) {
+      LOGGER.error("run failed.", e);
+    }
+    LOGGER.info("MigrateApplication run finished.");
   }
 
   private Action targetAction(String arg, Map<String, Action> beansOfType) {
