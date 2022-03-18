@@ -1,12 +1,22 @@
 {
+    "/**/": "模板文件，项目中必须以pom.json命名并放置在templates文件夹下，严格遵循以下格式",
+
+    "_comment": "原始开发框架类型,支持hsf、dubbo参数值,根据框架类型进行配置",
+    "frameType" : "hsf",
+
     "properties" :  [
         {
             "sign" :  "delete",
-            "data" : [
+            "hsf.data" : [
                 { 
                     "artifactId" : "pandora-boot.version"
                 }
-  			    ]
+  			    ],
+            "dubbo.data" : [
+                {
+                    "artifactId" : "dubbo-version"
+                }
+            ]
         },
         {
             "sign" : "add",
@@ -24,11 +34,16 @@
     "dependencyManagement.dependencies" :  [
         {
             "sign" :  "delete",
-            "data" :  [
+            "hsf.data" :  [
                 {  
                     "artifactId" : "pandora-boot-starter-bom"
                 }
-  			    ]
+  			    ],
+            "dubbo.data" :  [
+                {
+                    "artifactId" : "dubbo-dependencies-bom"
+                }
+            ]
         },
         {
             "sign" :  "add",
@@ -53,11 +68,34 @@
 	"dependencies" : [
         {
             "sign" :  "delete",
-            "data" :  [
+            "hsf.data" :  [
                 { 
                     "artifactId" : "pandora-hsf-spring-boot-starter"
+                },
+                {
+                    "artifactId" : "taobao-hsf.sar"
+                },
+                {
+                    "artifactId" : "pandora-boot-test"
                 }
-  			    ]
+  			    ],
+            "dubbo.data" :  [
+                {
+                    "artifactId" : "dubbo-spring-boot-starter"
+                },
+                {
+                    "artifactId" : "dubbo-config-spring"
+                },
+                {
+                    "artifactId" : "dubbo-metadata-report-zookeeper"
+                },
+                {
+                    "artifactId" : "dubbo-configcenter-zookeeper"
+                },
+                {
+                    "artifactId" : "dubbo-registry-zookeeper"
+                }
+            ]
         },
         {
             "sign" :  "add",

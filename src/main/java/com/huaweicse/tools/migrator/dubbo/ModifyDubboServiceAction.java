@@ -26,8 +26,7 @@ import com.huaweicse.tools.migrator.FileAction;
 @Component
 public class ModifyDubboServiceAction extends FileAction {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(
-      com.huaweicse.tools.migrator.ModifyHSFProviderAction.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ModifyDubboServiceAction.class);
 
   @Value("${dubbo.provider.packageName:org.apache.dubbo.config.annotation.DubboService}")
   private String dubboProviderPackageName;

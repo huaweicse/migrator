@@ -69,13 +69,14 @@ public class ModifyPomAction implements Action {
         String pomJsonString = IOUtils.toString(new FileInputStream(pomJsonPath), StandardCharsets.UTF_8);
         JSONObject pomJsonObject = JSONObject.parseObject(pomJsonString);
         Object jsonPomProperties = pomJsonObject.get("properties");
+        String frameType = pomJsonObject.get("frameType").toString();
         Properties mavenProperties = model.getProperties();
         if (!ObjectUtils.isEmpty(jsonPomProperties) && !ObjectUtils.isEmpty(mavenProperties)) {
           JSONArray jsonPropertiesArrays = JSONArray.parseArray(jsonPomProperties.toString());
           jsonPropertiesArrays.forEach(property -> {
             JSONObject propertyJsonObject = JSONObject.parseObject(property.toString());
-            JSONArray dataArrays = JSONArray.parseArray(propertyJsonObject.get("data").toString());
             String sign = propertyJsonObject.get("sign").toString();
+            JSONArray dataArrays = targetDataArrays(sign, propertyJsonObject, frameType);
             if ("add".equals(sign)) {
               dataArrays.forEach(data -> mavenProperties.putIfAbsent(
                   symbolValue(data, "label"), symbolValue(data, "value")));
@@ -93,8 +94,8 @@ public class ModifyPomAction implements Action {
           JSONArray jsonDependencyManagementArrays = JSONArray.parseArray(jsonPomDependencyManagements.toString());
           jsonDependencyManagementArrays.forEach(management -> {
             JSONObject managementJsonObject = JSONObject.parseObject(management.toString());
-            JSONArray dataArrays = JSONArray.parseArray(managementJsonObject.get("data").toString());
             String sign = managementJsonObject.get("sign").toString();
+            JSONArray dataArrays = targetDataArrays(sign, managementJsonObject, frameType);
             if ("add".equals(sign)) {
               dataArrays.forEach(data -> {
                 Dependency dependency = genDependency(symbolValue(data, "groupId"),
@@ -117,8 +118,8 @@ public class ModifyPomAction implements Action {
           JSONArray jsonDependencyArrays = JSONArray.parseArray(jsonPomDependencies.toString());
           jsonDependencyArrays.forEach(dependencyData -> {
             JSONObject dependencyJsonObject = JSONObject.parseObject(dependencyData.toString());
-            JSONArray dataArrays = JSONArray.parseArray(dependencyJsonObject.get("data").toString());
             String sign = dependencyJsonObject.get("sign").toString();
+            JSONArray dataArrays = targetDataArrays(sign, dependencyJsonObject, frameType);
             if ("add".equals(sign)) {
               dataArrays.forEach(data -> {
                 Dependency dependency = genDependency(symbolValue(data, "groupId"),
@@ -157,6 +158,11 @@ public class ModifyPomAction implements Action {
 
   private String symbolValue(Object data, String symbol) {
     return ((JSONObject) data).get(symbol).toString();
+  }
+
+  private JSONArray targetDataArrays(String sign, JSONObject jsonObject, String frameType) {
+    return "add".equals(sign) ? JSONArray.parseArray(jsonObject.get("data").toString()) :
+        JSONArray.parseArray(jsonObject.get(frameType + ".data").toString());
   }
 
   private Dependency genDependency(String groupId, String artifactId, String version, String type, String scope) {
