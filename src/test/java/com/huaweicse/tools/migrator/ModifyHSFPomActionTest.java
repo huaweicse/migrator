@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class ModifyPomActionTest {
+public class ModifyHSFPomActionTest {
 
   private static final String BASE_PATH = System.getProperty("user.dir");
 
@@ -20,7 +20,7 @@ public class ModifyPomActionTest {
   private String fileSeparator = File.separator;
 
   @Autowired
-  private ModifyPomAction modifyPomAction;
+  private ModifyHSFPomAction modifyHSFPomAction;
 
   @BeforeEach
   public void setUp() throws Exception {
@@ -37,8 +37,8 @@ public class ModifyPomActionTest {
   }
 
   @Test
-  public void testModifyPomAction() throws Exception {
-    modifyPomAction.run(TEMP_DIR_PATH + fileSeparator + "input");
+  public void testModifyHSFPomAction() throws Exception {
+    modifyHSFPomAction.run(TEMP_DIR_PATH + fileSeparator + "input");
     String targetPomFilePath =
         BASE_PATH + fileSeparator + "testfiles" + fileSeparator + "ModifyPomActionTest" + fileSeparator + "output"
             + fileSeparator + "pom.xml";

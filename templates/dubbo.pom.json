@@ -1,0 +1,91 @@
+{
+    "/**/": "模板文件，项目中必须以pom.json命名并放置在templates文件夹下，严格遵循以下格式",
+    "properties" :  [
+        {
+            "sign" :  "delete",
+            "data" : [
+                {
+                    "artifactId" : "dubbo-version"
+                }
+            ]
+        },
+        {
+            "sign" : "add",
+            "data" :  [
+                   { 
+                       "label" :  "spring-cloud.version",
+                       "value" : "2020.0.3"
+                   },
+                   {   "label" :  "spring-cloud-huawei.version",
+                       "value" : "1.8.0-2020.x"
+                   }
+			      ]
+        }
+    ],
+    "dependencyManagement.dependencies" :  [
+        {
+            "sign" :  "delete",
+            "data" :  [
+                {
+                    "artifactId" : "dubbo-dependencies-bom"
+                }
+            ]
+        },
+        {
+            "sign" :  "add",
+            "data" :  [
+                   { 
+                       "groupId" :  "com.huaweicloud",
+                       "artifactId" : "spring-cloud-huawei-bom",
+                       "version" : "${spring-cloud-huawei.version}",
+                       "type" : "pom",
+                       "scope" : "import"
+                   },
+                   { 
+                       "groupId" :  "org.springframework.cloud",
+                       "artifactId" : "spring-cloud-dependencies",
+                       "version" : "${spring-cloud.version}",
+                       "type" : "pom",
+                       "scope" : "import"
+                   }
+			      ]
+        }
+    ],
+	"dependencies" : [
+        {
+            "sign" :  "delete",
+            "data" :  [
+                {
+                    "artifactId" : "dubbo-spring-boot-starter"
+                },
+                {
+                    "artifactId" : "dubbo-config-spring"
+                },
+                {
+                    "artifactId" : "dubbo-metadata-report-zookeeper"
+                },
+                {
+                    "artifactId" : "dubbo-configcenter-zookeeper"
+                },
+                {
+                    "artifactId" : "dubbo-registry-zookeeper"
+                }
+            ]
+        },
+        {
+            "sign" :  "add",
+            "data" :  [
+                   { 
+                       "groupId" :  "com.huaweicloud",
+                       "artifactId" : "spring-cloud-starter-huawei-service-engine",
+                       "version" : ""
+                   },
+                   { 
+                       "groupId" :  "org.springframework.cloud",
+                       "artifactId" : "spring-cloud-starter-openfeign",
+                       "version" : ""
+                   }
+			      ]
+        }
+    ]
+}

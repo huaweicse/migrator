@@ -14,7 +14,7 @@ public class ModifyHSFAction implements Action {
 
   private ModifyHSFAddBootstrapYamlAction modifyHSFAddBootstrapYamlAction;
 
-  private ModifyPomAction modifyPomAction;
+  private ModifyHSFPomAction modifyHSFPomAction;
 
   private ModifyHSFMainClassAction modifyHSFMainClassAction;
 
@@ -23,20 +23,20 @@ public class ModifyHSFAction implements Action {
       ModifyHSFProviderAction modifyHSFProviderAction,
       ModifyHSFConsumerAction modifyHSFConsumerAction,
       ModifyHSFAddBootstrapYamlAction modifyHSFAddBootstrapYamlAction,
-      ModifyPomAction modifyPomAction,
+      ModifyHSFPomAction modifyHSFPomAction,
       ModifyHSFMainClassAction modifyHSFMainClassAction) {
     this.modifyHSFInterface2RestAction = modifyHSFInterface2RestAction;
     this.modifyHSFProviderAction = modifyHSFProviderAction;
     this.modifyHSFConsumerAction = modifyHSFConsumerAction;
     this.modifyHSFAddBootstrapYamlAction = modifyHSFAddBootstrapYamlAction;
-    this.modifyPomAction = modifyPomAction;
+    this.modifyHSFPomAction = modifyHSFPomAction;
     this.modifyHSFMainClassAction = modifyHSFMainClassAction;
   }
 
   @Override
   public void run(String... args) throws Exception {
     Action[] actions = new Action[] {modifyHSFInterface2RestAction, modifyHSFProviderAction
-        , modifyHSFConsumerAction, modifyHSFAddBootstrapYamlAction, modifyPomAction, modifyHSFMainClassAction};
+        , modifyHSFConsumerAction, modifyHSFAddBootstrapYamlAction, modifyHSFPomAction, modifyHSFMainClassAction};
     for (Action action : actions) {
       action.run(args);
     }
