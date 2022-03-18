@@ -1,5 +1,6 @@
 package com.huaweicse.tools.migrator;
 
+import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
@@ -64,10 +66,10 @@ public class ModifyPomAction implements Action {
         Model model = reader.read(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
         String pomJsonPath = BASE_PATH + FILE_SEPARATOR + "templates" + FILE_SEPARATOR + "pom.json";
         String pomJsonString = IOUtils.toString(new FileInputStream(pomJsonPath), StandardCharsets.UTF_8);
-        Properties mavenProperties = model.getProperties();
         JSONObject pomJsonObject = JSONObject.parseObject(pomJsonString);
         Object jsonPomProperties = pomJsonObject.get("properties");
         if (!ObjectUtils.isEmpty(jsonPomProperties)) {
+          Properties mavenProperties = model.getProperties();
           JSONArray jsonPropertiesArrays = JSONArray.parseArray(jsonPomProperties.toString());
           jsonPropertiesArrays.forEach(property -> {
             JSONObject propertyJsonObject = JSONObject.parseObject(property.toString());
@@ -81,6 +83,7 @@ public class ModifyPomAction implements Action {
               dataArrays.forEach(data -> mavenProperties.remove(symbolValue(data, "artifactId")));
             }
           });
+          model.setProperties(new OrderedWriteProperties(mavenProperties));
         }
         Object jsonPomDependencyManagements = pomJsonObject.get("dependencyManagement.dependencies");
         List<Dependency> managementDependencies = model.getDependencyManagement().getDependencies();
@@ -133,6 +136,17 @@ public class ModifyPomAction implements Action {
             StandardCharsets.UTF_8);
         new MavenXpp3Writer().write(outputStreamWriter, model);
         IOUtils.close(outputStreamWriter);
+
+        // 重新写一遍，修改换行
+        List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
+        CharArrayWriter tempStream = new CharArrayWriter();
+        for (String line : lines) {
+          tempStream.write(line);
+          tempStream.write(LINE_SEPARATOR);
+        }
+        OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
+        tempStream.writeTo(fileWriter);
+        fileWriter.close();
       } catch (Exception ex) {
         LOGGER.error("Process pom.xml [{}] failed", file.getAbsolutePath(), ex);
       }
