@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
@@ -68,16 +69,16 @@ public class ModifyPomAction implements Action {
         String pomJsonString = IOUtils.toString(new FileInputStream(pomJsonPath), StandardCharsets.UTF_8);
         JSONObject pomJsonObject = JSONObject.parseObject(pomJsonString);
         Object jsonPomProperties = pomJsonObject.get("properties");
-        if (!ObjectUtils.isEmpty(jsonPomProperties)) {
-          Properties mavenProperties = model.getProperties();
+        Properties mavenProperties = model.getProperties();
+        if (!ObjectUtils.isEmpty(jsonPomProperties) && !ObjectUtils.isEmpty(mavenProperties)) {
           JSONArray jsonPropertiesArrays = JSONArray.parseArray(jsonPomProperties.toString());
           jsonPropertiesArrays.forEach(property -> {
             JSONObject propertyJsonObject = JSONObject.parseObject(property.toString());
             JSONArray dataArrays = JSONArray.parseArray(propertyJsonObject.get("data").toString());
             String sign = propertyJsonObject.get("sign").toString();
             if ("add".equals(sign)) {
-              dataArrays
-                  .forEach(data -> mavenProperties.putIfAbsent(symbolValue(data, "label"), symbolValue(data, "value")));
+              dataArrays.forEach(data -> mavenProperties.putIfAbsent(
+                  symbolValue(data, "label"), symbolValue(data, "value")));
             }
             if ("delete".equals(sign)) {
               dataArrays.forEach(data -> mavenProperties.remove(symbolValue(data, "artifactId")));
@@ -86,8 +87,9 @@ public class ModifyPomAction implements Action {
           model.setProperties(new OrderedWriteProperties(mavenProperties));
         }
         Object jsonPomDependencyManagements = pomJsonObject.get("dependencyManagement.dependencies");
-        List<Dependency> managementDependencies = model.getDependencyManagement().getDependencies();
-        if (!ObjectUtils.isEmpty(jsonPomDependencyManagements)) {
+        DependencyManagement dependencyManagement = model.getDependencyManagement();
+        if (!ObjectUtils.isEmpty(jsonPomDependencyManagements) && !ObjectUtils.isEmpty(dependencyManagement)) {
+          List<Dependency> managementDependencies = dependencyManagement.getDependencies();
           JSONArray jsonDependencyManagementArrays = JSONArray.parseArray(jsonPomDependencyManagements.toString());
           jsonDependencyManagementArrays.forEach(management -> {
             JSONObject managementJsonObject = JSONObject.parseObject(management.toString());
@@ -111,7 +113,7 @@ public class ModifyPomAction implements Action {
         }
         Object jsonPomDependencies = pomJsonObject.get("dependencies");
         List<Dependency> dependencies = model.getDependencies();
-        if (!ObjectUtils.isEmpty(jsonPomDependencies)) {
+        if (!ObjectUtils.isEmpty(jsonPomDependencies) && !ObjectUtils.isEmpty(dependencies)) {
           JSONArray jsonDependencyArrays = JSONArray.parseArray(jsonPomDependencies.toString());
           jsonDependencyArrays.forEach(dependencyData -> {
             JSONObject dependencyJsonObject = JSONObject.parseObject(dependencyData.toString());
