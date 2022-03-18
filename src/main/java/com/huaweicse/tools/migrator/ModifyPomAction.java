@@ -21,14 +21,12 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
-@Component
-public class ModifyPomAction implements Action {
+public abstract class ModifyPomAction implements Action {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyPomAction.class);
 
@@ -37,6 +35,12 @@ public class ModifyPomAction implements Action {
   public static final String BASE_PATH = System.getProperty("user.dir");
 
   private List<File> pomFileList = new ArrayList<>();
+
+  public String frameType;
+
+  public String getFrameType() {
+    return frameType;
+  }
 
   @Override
   public void run(String... args) {
@@ -60,12 +64,12 @@ public class ModifyPomAction implements Action {
     }
   }
 
-  private void modifyContent() {
+  protected void modifyContent() {
     pomFileList.forEach(file -> {
       try {
         MavenXpp3Reader reader = new MavenXpp3Reader();
         Model model = reader.read(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
-        String pomJsonPath = BASE_PATH + FILE_SEPARATOR + "templates" + FILE_SEPARATOR + "pom.json";
+        String pomJsonPath = BASE_PATH + FILE_SEPARATOR + "templates" + FILE_SEPARATOR + getFrameType() + ".pom.json";
         String pomJsonString = IOUtils.toString(new FileInputStream(pomJsonPath), StandardCharsets.UTF_8);
         JSONObject pomJsonObject = JSONObject.parseObject(pomJsonString);
         Object jsonPomProperties = pomJsonObject.get("properties");
@@ -93,8 +97,8 @@ public class ModifyPomAction implements Action {
           JSONArray jsonDependencyManagementArrays = JSONArray.parseArray(jsonPomDependencyManagements.toString());
           jsonDependencyManagementArrays.forEach(management -> {
             JSONObject managementJsonObject = JSONObject.parseObject(management.toString());
-            JSONArray dataArrays = JSONArray.parseArray(managementJsonObject.get("data").toString());
             String sign = managementJsonObject.get("sign").toString();
+            JSONArray dataArrays = JSONArray.parseArray(managementJsonObject.get("data").toString());
             if ("add".equals(sign)) {
               dataArrays.forEach(data -> {
                 Dependency dependency = genDependency(symbolValue(data, "groupId"),
@@ -117,8 +121,8 @@ public class ModifyPomAction implements Action {
           JSONArray jsonDependencyArrays = JSONArray.parseArray(jsonPomDependencies.toString());
           jsonDependencyArrays.forEach(dependencyData -> {
             JSONObject dependencyJsonObject = JSONObject.parseObject(dependencyData.toString());
-            JSONArray dataArrays = JSONArray.parseArray(dependencyJsonObject.get("data").toString());
             String sign = dependencyJsonObject.get("sign").toString();
+            JSONArray dataArrays = JSONArray.parseArray(dependencyJsonObject.get("data").toString());
             if ("add".equals(sign)) {
               dataArrays.forEach(data -> {
                 Dependency dependency = genDependency(symbolValue(data, "groupId"),

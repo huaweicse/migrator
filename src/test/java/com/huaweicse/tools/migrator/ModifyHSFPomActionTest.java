@@ -20,7 +20,7 @@ public class ModifyHSFPomActionTest {
   private String fileSeparator = File.separator;
 
   @Autowired
-  private ModifyPomAction modifyHSFPomAction;
+  private ModifyHSFPomAction modifyHSFPomAction;
 
   @BeforeEach
   public void setUp() throws Exception {
@@ -37,7 +37,7 @@ public class ModifyHSFPomActionTest {
   }
 
   @Test
-  public void testAddBootstrapFile() throws Exception {
+  public void testModifyHSFPomAction() throws Exception {
     modifyHSFPomAction.run(TEMP_DIR_PATH + fileSeparator + "input");
     String targetPomFilePath =
         BASE_PATH + fileSeparator + "testfiles" + fileSeparator + "ModifyPomActionTest" + fileSeparator + "output"
