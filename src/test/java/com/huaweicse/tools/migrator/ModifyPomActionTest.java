@@ -1,9 +1,14 @@
 package com.huaweicse.tools.migrator;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class ModifyHSFPomActionTest {
+public class ModifyPomActionTest {
 
   private static final String BASE_PATH = System.getProperty("user.dir");
 
@@ -37,13 +42,19 @@ public class ModifyHSFPomActionTest {
   }
 
   @Test
-  public void testAddBootstrapFile() throws Exception {
+  public void testModifyPom() throws Exception {
     modifyHSFPomAction.run(TEMP_DIR_PATH + fileSeparator + "input");
     String targetPomFilePath =
         BASE_PATH + fileSeparator + "testfiles" + fileSeparator + "ModifyPomActionTest" + fileSeparator + "output"
             + fileSeparator + "pom.xml";
     String modifiedPomFilePath =
         TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + "pom.xml";
-    Utils.assertFileContentEquals(targetPomFilePath, modifiedPomFilePath);
+    Assert.assertEquals(genOrderedLines(targetPomFilePath), genOrderedLines(modifiedPomFilePath));
+  }
+
+  private List<String> genOrderedLines(String path) throws IOException {
+    List<String> contentLines = FileUtils.readLines(new File(path), StandardCharsets.UTF_8);
+    Collections.sort(contentLines);
+    return contentLines;
   }
 }
