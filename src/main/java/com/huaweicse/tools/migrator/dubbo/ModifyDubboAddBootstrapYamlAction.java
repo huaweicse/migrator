@@ -1,4 +1,4 @@
-package com.huaweicse.tools.migrator.hsf;
+package com.huaweicse.tools.migrator.dubbo;
 
 import org.springframework.stereotype.Component;
 
@@ -9,6 +9,6 @@ import com.huaweicse.tools.migrator.common.AddBootstrapYamlAction;
  *   在项目的 src/main/resources 目录下添加 bootstrap.yml 文件。
  */
 @Component
-public class ModifyHSFAddBootstrapYamlAction extends AddBootstrapYamlAction {
+public class ModifyDubboAddBootstrapYamlAction extends AddBootstrapYamlAction {
 
 }
