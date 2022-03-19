@@ -63,6 +63,19 @@
           <target>1.8</target>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>com.taobao.pandora</groupId>
+        <artifactId>pandora-boot-maven-plugin</artifactId>
+        <version>2.1.11.8</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 

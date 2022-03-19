@@ -17,6 +17,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.slf4j.Logger;
@@ -72,72 +73,14 @@ public abstract class ModifyPomAction implements Action {
         String pomJsonPath = BASE_PATH + FILE_SEPARATOR + "templates" + FILE_SEPARATOR + getFrameType() + ".pom.json";
         String pomJsonString = IOUtils.toString(new FileInputStream(pomJsonPath), StandardCharsets.UTF_8);
         JSONObject pomJsonObject = JSONObject.parseObject(pomJsonString);
-        Object jsonPomProperties = pomJsonObject.get("properties");
-        Properties mavenProperties = model.getProperties();
-        if (!ObjectUtils.isEmpty(jsonPomProperties) && !ObjectUtils.isEmpty(mavenProperties)) {
-          JSONArray jsonPropertiesArrays = JSONArray.parseArray(jsonPomProperties.toString());
-          jsonPropertiesArrays.forEach(property -> {
-            JSONObject propertyJsonObject = JSONObject.parseObject(property.toString());
-            JSONArray dataArrays = JSONArray.parseArray(propertyJsonObject.get("data").toString());
-            String sign = propertyJsonObject.get("sign").toString();
-            if ("add".equals(sign)) {
-              dataArrays.forEach(data -> mavenProperties.putIfAbsent(
-                  symbolValue(data, "label"), symbolValue(data, "value")));
-            }
-            if ("delete".equals(sign)) {
-              dataArrays.forEach(data -> mavenProperties.remove(symbolValue(data, "artifactId")));
-            }
-          });
-          model.setProperties(new OrderedWriteProperties(mavenProperties));
-        }
-        Object jsonPomDependencyManagements = pomJsonObject.get("dependencyManagement.dependencies");
-        DependencyManagement dependencyManagement = model.getDependencyManagement();
-        if (!ObjectUtils.isEmpty(jsonPomDependencyManagements) && !ObjectUtils.isEmpty(dependencyManagement)) {
-          List<Dependency> managementDependencies = dependencyManagement.getDependencies();
-          JSONArray jsonDependencyManagementArrays = JSONArray.parseArray(jsonPomDependencyManagements.toString());
-          jsonDependencyManagementArrays.forEach(management -> {
-            JSONObject managementJsonObject = JSONObject.parseObject(management.toString());
-            String sign = managementJsonObject.get("sign").toString();
-            JSONArray dataArrays = JSONArray.parseArray(managementJsonObject.get("data").toString());
-            if ("add".equals(sign)) {
-              dataArrays.forEach(data -> {
-                Dependency dependency = genDependency(symbolValue(data, "groupId"),
-                    symbolValue(data, "artifactId"),
-                    symbolValue(data, "version"),
-                    symbolValue(data, "type"),
-                    symbolValue(data, "scope"));
-                managementDependencies.add(dependency);
-              });
-            }
-            if ("delete".equals(sign)) {
-              dataArrays.forEach(data -> managementDependencies.removeIf(
-                  dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
-            }
-          });
-        }
-        Object jsonPomDependencies = pomJsonObject.get("dependencies");
-        List<Dependency> dependencies = model.getDependencies();
-        if (!ObjectUtils.isEmpty(jsonPomDependencies) && !ObjectUtils.isEmpty(dependencies)) {
-          JSONArray jsonDependencyArrays = JSONArray.parseArray(jsonPomDependencies.toString());
-          jsonDependencyArrays.forEach(dependencyData -> {
-            JSONObject dependencyJsonObject = JSONObject.parseObject(dependencyData.toString());
-            String sign = dependencyJsonObject.get("sign").toString();
-            JSONArray dataArrays = JSONArray.parseArray(dependencyJsonObject.get("data").toString());
-            if ("add".equals(sign)) {
-              dataArrays.forEach(data -> {
-                Dependency dependency = genDependency(symbolValue(data, "groupId"),
-                    symbolValue(data, "artifactId"),
-                    symbolValue(data, "version"),
-                    null, null);
-                dependencies.add(dependency);
-              });
-            }
-            if ("delete".equals(sign)) {
-              dataArrays.forEach(data -> dependencies.removeIf(
-                  dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
-            }
-          });
-        }
+        //properties
+        processProperties(model, pomJsonObject);
+        //dependencyManagement.dependencies
+        processDependencyManagement(model, pomJsonObject);
+        //dependencies
+        processDependencies(model, pomJsonObject);
+        //build -> plugins
+        processPlugins(model, pomJsonObject);
         OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(file),
             StandardCharsets.UTF_8);
         new MavenXpp3Writer().write(outputStreamWriter, model);
@@ -159,8 +102,137 @@ public abstract class ModifyPomAction implements Action {
     });
   }
 
-  private String symbolValue(Object data, String symbol) {
-    return ((JSONObject) data).get(symbol).toString();
+  private void processPlugins(Model model, JSONObject pomJsonObject) {
+    Object pluginsObj = pomJsonObject.get("build.plugins");
+    if (pluginsObj != null) {
+      List<Plugin> plugins = model.getBuild().getPlugins();
+      if (!ObjectUtils.isEmpty(plugins)) {
+        JSONArray jsonPluginArrays = JSONArray.parseArray(pluginsObj.toString());
+        jsonPluginArrays.forEach(pluginData -> {
+          JSONObject dependencyJsonObject = JSONObject.parseObject(pluginData.toString());
+          String sign = dependencyJsonObject.get("sign").toString();
+          JSONArray dataArrays = JSONArray.parseArray(dependencyJsonObject.get("data").toString());
+          if ("add".equals(sign)) {
+            dataArrays.forEach(data -> {
+              Plugin plugin = genPlugin(symbolValue(data, "groupId"),
+                  symbolValue(data, "artifactId"),
+                  symbolValue(data, "version"),
+                  null, null);
+              plugins.add(plugin);
+            });
+          }
+          if ("delete".equals(sign)) {
+            dataArrays.forEach(data -> plugins.removeIf(
+                plugin -> ((JSONObject) data).get("artifactId").toString().equals(plugin.getArtifactId())));
+          }
+          if ("replace".equals(sign)) {
+            dataArrays.forEach(data -> {
+              if (plugins.removeIf(plugin -> (((JSONObject) ((JSONObject) data).get("match"))
+                  .get("artifactId").toString().equals(plugin.getArtifactId())))) {
+                Plugin plugin = genPlugin(symbolValue(data, "replacement", "groupId"),
+                    symbolValue(data, "replacement", "artifactId"),
+                    symbolValue(data, "replacement", "version"),
+                    null, null);
+                plugins.add(plugin);
+              }
+            });
+          }
+        });
+      }
+    }
+  }
+
+  private void processDependencies(Model model, JSONObject pomJsonObject) {
+    Object jsonPomDependencies = pomJsonObject.get("dependencies");
+    List<Dependency> dependencies = model.getDependencies();
+    if (!ObjectUtils.isEmpty(jsonPomDependencies) && !ObjectUtils.isEmpty(dependencies)) {
+      JSONArray jsonDependencyArrays = JSONArray.parseArray(jsonPomDependencies.toString());
+      jsonDependencyArrays.forEach(dependencyData -> {
+        JSONObject dependencyJsonObject = JSONObject.parseObject(dependencyData.toString());
+        String sign = dependencyJsonObject.get("sign").toString();
+        JSONArray dataArrays = JSONArray.parseArray(dependencyJsonObject.get("data").toString());
+        if ("add".equals(sign)) {
+          dataArrays.forEach(data -> {
+            Dependency dependency = genDependency(symbolValue(data, "groupId"),
+                symbolValue(data, "artifactId"),
+                symbolValue(data, "version"),
+                null, null);
+            dependencies.add(dependency);
+          });
+        }
+        if ("delete".equals(sign)) {
+          dataArrays.forEach(data -> dependencies.removeIf(
+              dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
+        }
+      });
+    }
+  }
+
+  private void processDependencyManagement(Model model, JSONObject pomJsonObject) {
+    Object jsonPomDependencyManagements = pomJsonObject.get("dependencyManagement.dependencies");
+    DependencyManagement dependencyManagement = model.getDependencyManagement();
+    if (!ObjectUtils.isEmpty(jsonPomDependencyManagements) && !ObjectUtils.isEmpty(dependencyManagement)) {
+      List<Dependency> managementDependencies = dependencyManagement.getDependencies();
+      JSONArray jsonDependencyManagementArrays = JSONArray.parseArray(jsonPomDependencyManagements.toString());
+      jsonDependencyManagementArrays.forEach(management -> {
+        JSONObject managementJsonObject = JSONObject.parseObject(management.toString());
+        String sign = managementJsonObject.get("sign").toString();
+        JSONArray dataArrays = JSONArray.parseArray(managementJsonObject.get("data").toString());
+        if ("add".equals(sign)) {
+          dataArrays.forEach(data -> {
+            Dependency dependency = genDependency(symbolValue(data, "groupId"),
+                symbolValue(data, "artifactId"),
+                symbolValue(data, "version"),
+                symbolValue(data, "type"),
+                symbolValue(data, "scope"));
+            managementDependencies.add(dependency);
+          });
+        }
+        if ("delete".equals(sign)) {
+          dataArrays.forEach(data -> managementDependencies.removeIf(
+              dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
+        }
+      });
+    }
+  }
+
+  private void processProperties(Model model, JSONObject pomJsonObject) {
+    Object jsonPomProperties = pomJsonObject.get("properties");
+    Properties mavenProperties = model.getProperties();
+    if (!ObjectUtils.isEmpty(jsonPomProperties) && !ObjectUtils.isEmpty(mavenProperties)) {
+      JSONArray jsonPropertiesArrays = JSONArray.parseArray(jsonPomProperties.toString());
+      jsonPropertiesArrays.forEach(property -> {
+        JSONObject propertyJsonObject = JSONObject.parseObject(property.toString());
+        JSONArray dataArrays = JSONArray.parseArray(propertyJsonObject.get("data").toString());
+        String sign = propertyJsonObject.get("sign").toString();
+        if ("add".equals(sign)) {
+          dataArrays.forEach(data -> mavenProperties.putIfAbsent(
+              symbolValue(data, "label"), symbolValue(data, "value")));
+        }
+        if ("delete".equals(sign)) {
+          dataArrays.forEach(data -> mavenProperties.remove(symbolValue(data, "artifactId")));
+        }
+      });
+      model.setProperties(new OrderedWriteProperties(mavenProperties));
+    }
+  }
+
+  private String symbolValue(Object data, String... symbol) {
+    Object result = data;
+    for (String s : symbol) {
+      result = ((JSONObject) result).get(s);
+    }
+    return result == null ? null : result.toString();
+  }
+
+  private Plugin genPlugin(String groupId, String artifactId, String version, String type, String scope) {
+    Plugin plugin = new Plugin();
+    plugin.setGroupId(groupId);
+    plugin.setArtifactId(artifactId);
+    if (!ObjectUtils.isEmpty(version)) {
+      plugin.setVersion(version);
+    }
+    return plugin;
   }
 
   private Dependency genDependency(String groupId, String artifactId, String version, String type, String scope) {
