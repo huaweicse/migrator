@@ -1,4 +1,4 @@
-package com.huaweicse.tools.migrator;
+package com.huaweicse.tools.migrator.common;
 
 import java.io.CharArrayWriter;
 import java.io.File;

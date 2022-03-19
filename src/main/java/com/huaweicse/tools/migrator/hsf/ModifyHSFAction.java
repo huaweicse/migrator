@@ -1,7 +1,9 @@
-package com.huaweicse.tools.migrator;
+package com.huaweicse.tools.migrator.hsf;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.huaweicse.tools.migrator.common.Action;
 
 @Component
 public class ModifyHSFAction implements Action {

@@ -1,4 +1,4 @@
-package com.huaweicse.tools.migrator;
+package com.huaweicse.tools.migrator.common;
 
 import java.util.LinkedHashSet;
 import java.util.Properties;

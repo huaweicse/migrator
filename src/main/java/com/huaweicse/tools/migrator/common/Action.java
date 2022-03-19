@@ -1,4 +1,4 @@
-package com.huaweicse.tools.migrator;
+package com.huaweicse.tools.migrator.common;
 
 public interface Action {
   String ERROR_MESSAGE = "Manual processing is required. Cause is [{}]."

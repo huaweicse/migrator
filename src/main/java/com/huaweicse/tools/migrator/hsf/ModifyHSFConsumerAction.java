@@ -1,4 +1,4 @@
-package com.huaweicse.tools.migrator;
+package com.huaweicse.tools.migrator.hsf;
 
 import java.io.CharArrayWriter;
 import java.io.File;
@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
+import com.huaweicse.tools.migrator.common.FileAction;
 
 /**
  * 功能描述：

@@ -1,4 +1,4 @@
-package com.huaweicse.tools.migrator;
+package com.huaweicse.tools.migrator.hsf;
 
 import java.io.CharArrayWriter;
 import java.io.File;
@@ -10,6 +10,8 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
+
+import com.huaweicse.tools.migrator.common.FileAction;
 
 /**
  * 功能描述：

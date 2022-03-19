@@ -1,4 +1,4 @@
-package com.huaweicse.tools.migrator;
+package com.huaweicse.tools.migrator.hsf;
 
 import java.io.File;
 import java.util.Random;
@@ -10,8 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import com.huaweicse.tools.migrator.Utils;
+import com.huaweicse.tools.migrator.hsf.ModifyHSFProviderAction;
+
 @SpringBootTest
-public class ModifyHSFInterface2RestActionTest {
+public class ModifyHSFProviderActionTest {
 
   private static final String BASE_PATH = System.getProperty("user.dir");
 
@@ -20,7 +23,7 @@ public class ModifyHSFInterface2RestActionTest {
   private String fileSeparator = File.separator;
 
   @Autowired
-  private ModifyHSFInterface2RestAction modifyHSFInterface2RestAction;
+  private ModifyHSFProviderAction modifyHSFProviderAction;
 
   @BeforeEach
   public void setUp() throws Exception {
@@ -32,18 +35,21 @@ public class ModifyHSFInterface2RestActionTest {
   }
 
   @AfterEach
-  public void tearDown() throws Exception {
+  public void tearDown() throws Exception  {
     FileUtils.deleteDirectory(new File(TEMP_DIR_PATH));
   }
 
 
   @Test
-  public void testInterface2Rest() throws Exception {
+  public void testModifyHSFProviderAction() throws Exception {
     String localBaseFilePath = BASE_PATH + fileSeparator + "testfiles";
     String tempBaseFilePath = TEMP_DIR_PATH + fileSeparator + "input";
-    modifyHSFInterface2RestAction.run(tempBaseFilePath);
-    String fileName = "HSFInterfaceService.java";
-    Utils.assertFileContentEquals(localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+    modifyHSFProviderAction.run(tempBaseFilePath);
+
+    String fileName = "HSFInterfaceServiceImpl.java";
+    Utils.assertFileContentEquals(
+       localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
         tempBaseFilePath + fileSeparator + fileName);
   }
+
 }

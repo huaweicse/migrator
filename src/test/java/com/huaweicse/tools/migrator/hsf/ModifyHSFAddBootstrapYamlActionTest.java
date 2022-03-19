@@ -1,4 +1,4 @@
-package com.huaweicse.tools.migrator;
+package com.huaweicse.tools.migrator.hsf;
 
 import java.io.File;
 import java.util.Random;
@@ -9,6 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import com.huaweicse.tools.migrator.Utils;
+import com.huaweicse.tools.migrator.hsf.ModifyHSFAddBootstrapYamlAction;
 
 @SpringBootTest
 public class ModifyHSFAddBootstrapYamlActionTest {
