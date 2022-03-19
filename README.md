@@ -1,10 +1,9 @@
 # migrator
 Tools set to migrate applications
 
-## ModifyHSFXXX
+See [Wiki](https://github.com/huaweicse/migrator/wiki) for details
 
-将HSF应用改造为Spring Cloud + CSE应用相关工具（集成Spring Cloud Huawei)。
+# 迁移工具
+本项目提供一系列工具迁移微服务应用。
 
-## ModifyDubboXXX
-
-将Dubbo应用改造为Spring Cloud + CSE应用相关工具（集成Spring Cloud Huawei)。
+详细说明请参考[Wiki](https://github.com/huaweicse/migrator/wiki)
