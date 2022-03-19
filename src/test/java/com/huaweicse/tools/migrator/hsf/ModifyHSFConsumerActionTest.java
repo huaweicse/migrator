@@ -1,13 +1,9 @@
-package com.huaweicse.tools.migrator;
+package com.huaweicse.tools.migrator.hsf;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +11,9 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import com.huaweicse.tools.migrator.Utils;
+import com.huaweicse.tools.migrator.hsf.ModifyHSFConsumerAction;
 
 @SpringBootTest
 @TestInstance(Lifecycle.PER_CLASS)

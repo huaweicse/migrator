@@ -1,4 +1,4 @@
-package com.huaweicse.tools.migrator;
+package com.huaweicse.tools.migrator.hsf;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,6 +9,8 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import com.huaweicse.tools.migrator.common.Action;
 
 /**
  * 功能描述：

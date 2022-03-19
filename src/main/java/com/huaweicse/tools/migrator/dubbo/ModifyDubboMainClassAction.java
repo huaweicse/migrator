@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.huaweicse.tools.migrator.FileAction;
+import com.huaweicse.tools.migrator.common.FileAction;
 
 @Component
 public class ModifyDubboMainClassAction extends FileAction {
