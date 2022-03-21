@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.huaweicse.tools.migrator.common.FileAction;
+import com.huaweicse.tools.migrator.common.ParamValueType;
 
 /**
  * 功能描述：
@@ -224,14 +225,3 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   }
 }
 
-enum ParamValueType {
-  String,
-  Byte,
-  Short,
-  Integer,
-  Long,
-  Float,
-  Double,
-  Boolean,
-  Character
-}
