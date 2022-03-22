@@ -1,5 +1,5 @@
 {
-    "/**/": "模板文件，项目中必须以pom.json命名并放置在templates文件夹下，严格遵循以下格式",
+    "/**/": "模板文件，项目中必须以xxx.pom.json命名并放置在templates文件夹下，严格遵循以下格式",
     "properties" :  [
         {
             "sign" :  "delete",

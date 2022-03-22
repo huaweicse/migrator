@@ -9,7 +9,6 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -55,11 +54,11 @@ public class ModifyDubboInterface2RestAction extends FileAction {
 
   private static final String DUBBO_SERVICE = "@DubboService";
 
-  private Map<String, String> properties = new HashMap<>();
+  private List<String> microserviceNameDatas = new ArrayList<>();
 
   private static final String ROUTER_REGEX_PATTERN = "[/*{}]";
 
-  private Map<String, String> interfaceNameMaps = new HashMap<>();
+  private List<String> interfaceData = new ArrayList<>();
 
   @Override
   public void run(String... args) throws Exception {
@@ -73,18 +72,21 @@ public class ModifyDubboInterface2RestAction extends FileAction {
     filterTargetInterfaceFile(interfaceExposeFiles);
     acceptedFiles.removeAll(interfaceExposeFiles);
     List<File> resourceFile = acceptedFiles.stream()
-        .filter(file -> (file.getName().endsWith(".yml") || file.getName().endsWith(".properties")))
-        .collect(Collectors.toList());
+        .filter(file -> (file.getName().endsWith(".yml"))).collect(Collectors.toList());
     loadResourceFile(resourceFile);
     acceptedFiles.removeAll(resourceFile);
-    replaceContent(acceptedFiles, interfaceNameMaps);
+    replaceContent(acceptedFiles, interfaceData);
   }
 
   private void filterTargetInterfaceFile(List<File> interfaceExposeFiles) throws IOException {
     for (File file : interfaceExposeFiles) {
       List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
+      StringBuilder interfaceFileInfo = new StringBuilder();
       for (int i = 0; i < lines.size(); i++) {
         String line = lines.get(i);
+        if (line.trim().startsWith("package")) {
+          interfaceFileInfo.append(line.trim().split(" ")[1].replace(";", ":"));
+        }
         if (line.trim().startsWith(DUBBO_SERVICE)) {
           Pattern pattern = Pattern.compile(INTERFACE_REGEX_PATTERN);
           String nextLine = lines.get(i + 1);
@@ -97,7 +99,8 @@ public class ModifyDubboInterface2RestAction extends FileAction {
             LOGGER.error(ERROR_MESSAGE, "@DubboSerivce not follow interface definition.", file.getAbsolutePath(), i);
             break;
           }
-          interfaceNameMaps.put(file.getParentFile().getAbsolutePath(), interfaceName);
+          interfaceData
+              .add(file.getAbsolutePath().substring(0, file.getAbsolutePath().indexOf("java")) + interfaceName);
           break;
         }
       }
@@ -106,26 +109,27 @@ public class ModifyDubboInterface2RestAction extends FileAction {
 
   @Override
   protected boolean isAcceptedFile(File file) throws IOException {
-    if (file.getName().endsWith(".java") || file.getName().endsWith(".yml") || file.getName()
-        .endsWith(".properties")) {
+    if (file.getName().endsWith(".java") || file.getName().endsWith(".yml")) {
       return file.getName().endsWith(".java") ?
           (fileContains(file, DUBBO_SERVICE) || fileContains(file, "interface")) : fileContains(file, "dubbo");
     }
     return false;
   }
 
-  private void replaceContent(List<File> acceptedFiles, Map<String, String> interfaceNameMaps) {
+  private void replaceContent(List<File> acceptedFiles, List<String> interfaceData) {
     acceptedFiles.forEach(file -> {
       try {
-        if (interfaceNameMaps.size() == 0) {
+        if (interfaceData.size() == 0) {
           return;
         }
         CharArrayWriter tempStream = new CharArrayWriter();
-        String tempInterfaceFileName = null;
-        Set<Entry<String, String>> entries = interfaceNameMaps.entrySet();
-        for (Entry<String, String> entry : entries) {
-          if (entry.getValue().equals(file.getName().replace(".java", ""))) {
-            if (properties.containsKey(entry.getKey())) {
+        String tempInterfaceData = null;
+        for (String data : interfaceData) {
+          for (String microserviceNameData : microserviceNameDatas) {
+            if (data.substring(data.lastIndexOf(File.separator) + 1)
+                .equals(file.getName().replace(".java", "")) &&
+                data.substring(0, data.lastIndexOf(File.separator))
+                    .equals(microserviceNameData.substring(0, microserviceNameData.lastIndexOf(File.separator)))) {
               List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
               for (String line : lines) {
                 if (line.contains("package")) {
@@ -143,7 +147,8 @@ public class ModifyDubboInterface2RestAction extends FileAction {
                 if (matcher.find()) {
                   String subStr = line.split(" ")[2];
                   writeLine(tempStream,
-                      feignClientInfo(properties.get(entry.getKey()),
+                      feignClientInfo(
+                          microserviceNameData.substring(microserviceNameData.lastIndexOf(File.separator) + 1),
                           subStr.substring(0, 1).toLowerCase() + subStr.substring(1)));
                   writeLine(tempStream, line);
                   continue;
@@ -164,7 +169,7 @@ public class ModifyDubboInterface2RestAction extends FileAction {
                 }
                 writeLine(tempStream, line);
               }
-              tempInterfaceFileName = entry.getKey();
+              tempInterfaceData = data;
               OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file),
                   StandardCharsets.UTF_8);
               tempStream.writeTo(fileWriter);
@@ -172,7 +177,7 @@ public class ModifyDubboInterface2RestAction extends FileAction {
             }
           }
         }
-        interfaceNameMaps.remove(tempInterfaceFileName);
+        interfaceData.remove(tempInterfaceData);
       } catch (IOException e) {
         LOGGER.error("error modifying content and filePath is {}", file.getAbsolutePath());
       }
@@ -198,10 +203,11 @@ public class ModifyDubboInterface2RestAction extends FileAction {
     resourceFile.forEach(file -> {
       try {
         FileInputStream inputStream = new FileInputStream(file);
-        Map<String,Object> map = new Yaml().loadAs(inputStream, Map.class);
+        Map<String, Object> map = new Yaml().loadAs(inputStream, Map.class);
         String microserviceName = (String) Objects
             .requireNonNull(initYml(Objects.requireNonNull(initYml(map, "dubbo")), "application")).get("name");
-        properties.put(file.getParentFile().getAbsolutePath(), microserviceName);
+        microserviceNameDatas
+            .add(file.getAbsolutePath().substring(0, file.getAbsolutePath().indexOf("resources")) + microserviceName);
         inputStream.close();
       } catch (Exception e) {
         LOGGER.error("Process file [{}] failed", file.getAbsolutePath(), e);
