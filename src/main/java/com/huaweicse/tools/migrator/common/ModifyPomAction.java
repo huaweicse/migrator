@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
@@ -105,8 +106,9 @@ public abstract class ModifyPomAction implements Action {
   private void processPlugins(Model model, JSONObject pomJsonObject) {
     Object pluginsObj = pomJsonObject.get("build.plugins");
     if (pluginsObj != null) {
-      List<Plugin> plugins = model.getBuild().getPlugins();
-      if (!ObjectUtils.isEmpty(plugins)) {
+      Build build = model.getBuild();
+      if (!ObjectUtils.isEmpty(build)) {
+        List<Plugin> plugins = build.getPlugins();
         JSONArray jsonPluginArrays = JSONArray.parseArray(pluginsObj.toString());
         jsonPluginArrays.forEach(pluginData -> {
           JSONObject dependencyJsonObject = JSONObject.parseObject(pluginData.toString());
