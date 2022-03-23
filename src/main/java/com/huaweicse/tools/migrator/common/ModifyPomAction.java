@@ -169,26 +169,19 @@ public abstract class ModifyPomAction implements Action {
               dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
         }
         if ("replace".equals(sign)) {
-          List<Dependency> delList = new ArrayList<>();
-          List<Dependency> addList = new ArrayList<>();
           dataArrays.forEach(data -> {
-            String matchPropertyValue = ((JSONObject) ((JSONObject) data).get("match")).getString("artifactId");
-            for (Dependency dependency : dependencies) {
-              if (matchPropertyValue.equals(dependency.getArtifactId())) {
-                delList.add(dependency);
-                JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
-                replacementArrays.forEach(replacementArray -> {
-                  Dependency replaceDependency = genDependency(symbolValue(replacementArray, "groupId"),
-                      symbolValue(replacementArray, "artifactId"),
-                      symbolValue(replacementArray, "version"),
-                      null,
-                      null);
-                  addList.add(replaceDependency);
-                });
-              }
+            if (dependencies.removeIf(dependency -> (((JSONObject) ((JSONObject) data).get("match"))
+                .getString("artifactId").equals(dependency.getArtifactId())))) {
+              JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
+              replacementArrays.forEach(replacementArray -> {
+                Dependency replaceDependency = genDependency(symbolValue(replacementArray, "groupId"),
+                    symbolValue(replacementArray, "artifactId"),
+                    symbolValue(replacementArray, "version"),
+                    null,
+                    null);
+                dependencies.add(replaceDependency);
+              });
             }
-            dependencies.removeAll(delList);
-            dependencies.addAll(addList);
           });
         }
       });
@@ -198,7 +191,7 @@ public abstract class ModifyPomAction implements Action {
   private void processDependencyManagement(Model model, JSONObject pomJsonObject) {
     Object jsonPomDependencyManagements = pomJsonObject.get("dependencyManagement.dependencies");
     DependencyManagement dependencyManagement = model.getDependencyManagement();
-    if (!ObjectUtils.isEmpty(jsonPomDependencyManagements)) {
+    if (!ObjectUtils.isEmpty(jsonPomDependencyManagements) && !ObjectUtils.isEmpty(dependencyManagement)) {
       List<Dependency> managementDependencies = dependencyManagement.getDependencies();
       JSONArray jsonDependencyManagementArrays = JSONArray.parseArray(jsonPomDependencyManagements.toString());
       jsonDependencyManagementArrays.forEach(management -> {
@@ -219,29 +212,21 @@ public abstract class ModifyPomAction implements Action {
           dataArrays.forEach(data -> managementDependencies.removeIf(
               dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
         }
-
         if ("replace".equals(sign)) {
-          List<Dependency> delList = new ArrayList<>();
-          List<Dependency> addList = new ArrayList<>();
           dataArrays.forEach(data -> {
-            String matchPropertyValue = ((JSONObject) ((JSONObject) data).get("match")).getString("artifactId");
-            managementDependencies.forEach(dependency -> {
-              if (matchPropertyValue.equals(dependency.getArtifactId())) {
-                delList.add(dependency);
-                JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
-                replacementArrays.forEach(replacementArray -> {
-                  Dependency replaceDependency = genDependency(symbolValue(replacementArray, "groupId"),
-                      symbolValue(replacementArray, "artifactId"),
-                      symbolValue(replacementArray, "version"),
-                      symbolValue(replacementArray, "type"),
-                      symbolValue(replacementArray, "scope"));
-                  addList.add(replaceDependency);
-                });
-              }
-            });
+            if (managementDependencies.removeIf(managementDependency -> (((JSONObject) ((JSONObject) data).get("match"))
+                .getString("artifactId").equals(managementDependency.getArtifactId())))) {
+              JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
+              replacementArrays.forEach(replacementArray -> {
+                Dependency replaceDependency = genDependency(symbolValue(replacementArray, "groupId"),
+                    symbolValue(replacementArray, "artifactId"),
+                    symbolValue(replacementArray, "version"),
+                    symbolValue(replacementArray, "type"),
+                    symbolValue(replacementArray, "scope"));
+                managementDependencies.add(replaceDependency);
+              });
+            }
           });
-          managementDependencies.removeAll(delList);
-          managementDependencies.addAll(addList);
         }
       });
     }

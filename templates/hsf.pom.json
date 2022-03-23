@@ -31,6 +31,14 @@
     ],
     "dependencyManagement.dependencies" :  [
         {
+            "operation" :  "delete",
+            "data" : [
+                {
+                    "artifactId" : "spring-boot-dependencies"
+                }
+            ]
+        },
+        {
             "operation" :  "replace",
             "data" :  [
                 {
@@ -38,6 +46,13 @@
                         "artifactId": "pandora-boot-starter-bom"
                     },
                     "replacement": [
+                        {
+                            "groupId" :  "org.springframework.boot",
+                            "artifactId" : "spring-boot-dependencies",
+                            "version" : "${spring-boot.version}",
+                            "type" : "pom",
+                            "scope" : "import"
+                        },
                         {
                             "groupId" :  "com.huaweicloud",
                             "artifactId" : "spring-cloud-huawei-bom",
