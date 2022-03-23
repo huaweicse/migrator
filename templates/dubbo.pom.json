@@ -27,22 +27,6 @@
                        "value" : "1.8.0-2020.0.x"
                    }
             ]
-        },
-        {
-            "operation" :  "replace",
-            "data" :  [
-                {
-                    "match" : {
-                        "property": "dubbo-version"
-                    },
-                    "replacement": [
-                        {
-                            "property" :  "spring-boot.version",
-                            "value" : "2.5.3"
-                        }
-                    ]
-                }
-            ]
         }
     ],
     "dependencyManagement.dependencies" :  [

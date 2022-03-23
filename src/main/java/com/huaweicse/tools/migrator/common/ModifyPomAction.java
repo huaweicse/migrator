@@ -169,11 +169,13 @@ public abstract class ModifyPomAction implements Action {
               dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
         }
         if ("replace".equals(sign)) {
+          List<Dependency> delList = new ArrayList<>();
+          List<Dependency> addList = new ArrayList<>();
           dataArrays.forEach(data -> {
             String matchPropertyValue = ((JSONObject) ((JSONObject) data).get("match")).getString("artifactId");
             for (Dependency dependency : dependencies) {
               if (matchPropertyValue.equals(dependency.getArtifactId())) {
-                dependencies.remove(dependency);
+                delList.add(dependency);
                 JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
                 replacementArrays.forEach(replacementArray -> {
                   Dependency replaceDependency = genDependency(symbolValue(replacementArray, "groupId"),
@@ -181,10 +183,12 @@ public abstract class ModifyPomAction implements Action {
                       symbolValue(replacementArray, "version"),
                       null,
                       null);
-                  dependencies.add(replaceDependency);
+                  addList.add(replaceDependency);
                 });
               }
             }
+            dependencies.removeAll(delList);
+            dependencies.addAll(addList);
           });
         }
       });
@@ -215,12 +219,15 @@ public abstract class ModifyPomAction implements Action {
           dataArrays.forEach(data -> managementDependencies.removeIf(
               dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
         }
+
         if ("replace".equals(sign)) {
+          List<Dependency> delList = new ArrayList<>();
+          List<Dependency> addList = new ArrayList<>();
           dataArrays.forEach(data -> {
             String matchPropertyValue = ((JSONObject) ((JSONObject) data).get("match")).getString("artifactId");
-            for (Dependency dependency : managementDependencies) {
+            managementDependencies.forEach(dependency -> {
               if (matchPropertyValue.equals(dependency.getArtifactId())) {
-                managementDependencies.remove(dependency);
+                delList.add(dependency);
                 JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
                 replacementArrays.forEach(replacementArray -> {
                   Dependency replaceDependency = genDependency(symbolValue(replacementArray, "groupId"),
@@ -228,11 +235,13 @@ public abstract class ModifyPomAction implements Action {
                       symbolValue(replacementArray, "version"),
                       symbolValue(replacementArray, "type"),
                       symbolValue(replacementArray, "scope"));
-                  managementDependencies.add(replaceDependency);
+                  addList.add(replaceDependency);
                 });
               }
-            }
+            });
           });
+          managementDependencies.removeAll(delList);
+          managementDependencies.addAll(addList);
         }
       });
     }

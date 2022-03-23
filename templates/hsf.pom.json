@@ -27,62 +27,9 @@
                        "value" : "1.8.0-2020.0.x"
                    }
             ]
-        },
-        {
-            "operation" :  "replace",
-            "data" :  [
-                {
-                    "match" : {
-                        "property": "hsf-version"
-                    },
-                    "replacement": [
-                        {
-                            "property" :  "spring-boot.version",
-                            "value" : "2.5.3"
-                        }
-                    ]
-                }
-            ]
         }
     ],
     "dependencyManagement.dependencies" :  [
-        {
-            "operation" :  "delete",
-            "data" :  [
-                {  
-                    "artifactId" : "pandora-boot-starter-bom"
-                },
-                {
-                    "artifactId" : "spring-boot-dependencies"
-                }
-            ]
-        },
-        {
-            "operation" :  "add",
-            "data" :  [
-                    {
-                        "groupId" :  "org.springframework.boot",
-                        "artifactId" : "spring-boot-dependencies",
-                        "version" : "${spring-boot.version}",
-                        "type" : "pom",
-                        "scope" : "import"
-                    },
-                   { 
-                       "groupId" :  "com.huaweicloud",
-                       "artifactId" : "spring-cloud-huawei-bom",
-                       "version" : "${spring-cloud-huawei.version}",
-                       "type" : "pom",
-                       "scope" : "import"
-                   },
-                   { 
-                       "groupId" :  "org.springframework.cloud",
-                       "artifactId" : "spring-cloud-dependencies",
-                       "version" : "${spring-cloud.version}",
-                       "type" : "pom",
-                       "scope" : "import"
-                   }
-			      ]
-        },
         {
             "operation" :  "replace",
             "data" :  [
@@ -91,6 +38,13 @@
                         "artifactId": "pandora-boot-starter-bom"
                     },
                     "replacement": [
+                        {
+                            "groupId" :  "com.huaweicloud",
+                            "artifactId" : "spring-cloud-huawei-bom",
+                            "version" : "${spring-cloud-huawei.version}",
+                            "type" : "pom",
+                            "scope" : "import"
+                        },
                         {
                             "groupId" :  "org.springframework.cloud",
                             "artifactId" : "spring-cloud-dependencies",
@@ -107,9 +61,6 @@
         {
             "operation" :  "delete",
             "data" :  [
-                { 
-                    "artifactId" : "pandora-hsf-spring-boot-starter"
-                },
                 {
                     "artifactId" : "taobao-hsf.sar"
                 },
@@ -118,29 +69,19 @@
                 }
             ]
         },
-        {
-            "operation" :  "add",
-            "data" :  [
-                   { 
-                       "groupId" :  "com.huaweicloud",
-                       "artifactId" : "spring-cloud-starter-huawei-service-engine",
-                       "version" : ""
-                   },
-                   { 
-                       "groupId" :  "org.springframework.cloud",
-                       "artifactId" : "spring-cloud-starter-openfeign",
-                       "version" : ""
-                   }
-            ]
-        },
       {
           "operation" :  "replace",
           "data" :  [
               {
                   "match" : {
-                      "artifactId": "pandora-boot-test"
+                      "artifactId": "pandora-hsf-spring-boot-starter"
                   },
                   "replacement": [
+                      {
+                          "groupId" :  "com.huaweicloud",
+                          "artifactId" : "spring-cloud-starter-huawei-service-engine",
+                          "version" : ""
+                      },
                       {
                           "groupId" :  "org.springframework.cloud",
                           "artifactId" : "spring-cloud-starter-openfeign",
