@@ -16,6 +16,11 @@ import org.springframework.stereotype.Component;
 
 import com.huaweicse.tools.migrator.common.FileAction;
 
+/**
+ * 功能描述：
+ *   扫描目录下面的所有JAVA文件，识别文件是否包含 @DubboReference 标签，如果存在，将其替换为 @FeignClient。
+ *   替换过程中，会替换 import，一并修改 import。
+ */
 @Component
 public class ModifyDubboReferenceAction extends FileAction {
 

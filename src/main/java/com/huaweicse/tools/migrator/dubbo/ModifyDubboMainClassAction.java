@@ -16,6 +16,11 @@ import org.springframework.stereotype.Component;
 
 import com.huaweicse.tools.migrator.common.FileAction;
 
+/**
+ * 功能描述：
+ *   扫描目录下面的所有JAVA文件，识别文件是否包含main函数，并将相关 @EnableDubbo 逻辑改为 Spring Boot。
+ *   替换过程中，会替换 import，一并修改 import。
+ */
 @Component
 public class ModifyDubboMainClassAction extends FileAction {
 
