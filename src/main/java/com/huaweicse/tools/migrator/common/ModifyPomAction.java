@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Stream;
 
@@ -112,14 +113,13 @@ public abstract class ModifyPomAction implements Action {
         JSONArray jsonPluginArrays = JSONArray.parseArray(pluginsObj.toString());
         jsonPluginArrays.forEach(pluginData -> {
           JSONObject dependencyJsonObject = JSONObject.parseObject(pluginData.toString());
-          String sign = dependencyJsonObject.get("sign").toString();
+          String sign = dependencyJsonObject.get("operation").toString();
           JSONArray dataArrays = JSONArray.parseArray(dependencyJsonObject.get("data").toString());
           if ("add".equals(sign)) {
             dataArrays.forEach(data -> {
               Plugin plugin = genPlugin(symbolValue(data, "groupId"),
                   symbolValue(data, "artifactId"),
-                  symbolValue(data, "version"),
-                  null, null);
+                  symbolValue(data, "version"));
               plugins.add(plugin);
             });
           }
@@ -130,12 +130,14 @@ public abstract class ModifyPomAction implements Action {
           if ("replace".equals(sign)) {
             dataArrays.forEach(data -> {
               if (plugins.removeIf(plugin -> (((JSONObject) ((JSONObject) data).get("match"))
-                  .get("artifactId").toString().equals(plugin.getArtifactId())))) {
-                Plugin plugin = genPlugin(symbolValue(data, "replacement", "groupId"),
-                    symbolValue(data, "replacement", "artifactId"),
-                    symbolValue(data, "replacement", "version"),
-                    null, null);
-                plugins.add(plugin);
+                  .getString("artifactId").equals(plugin.getArtifactId())))) {
+                JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
+                replacementArrays.forEach(replacementArray -> {
+                  Plugin plugin = genPlugin(symbolValue(replacementArray, "groupId"),
+                      symbolValue(replacementArray, "artifactId"),
+                      symbolValue(replacementArray, "version"));
+                  plugins.add(plugin);
+                });
               }
             });
           }
@@ -151,7 +153,7 @@ public abstract class ModifyPomAction implements Action {
       JSONArray jsonDependencyArrays = JSONArray.parseArray(jsonPomDependencies.toString());
       jsonDependencyArrays.forEach(dependencyData -> {
         JSONObject dependencyJsonObject = JSONObject.parseObject(dependencyData.toString());
-        String sign = dependencyJsonObject.get("sign").toString();
+        String sign = dependencyJsonObject.get("operation").toString();
         JSONArray dataArrays = JSONArray.parseArray(dependencyJsonObject.get("data").toString());
         if ("add".equals(sign)) {
           dataArrays.forEach(data -> {
@@ -166,6 +168,22 @@ public abstract class ModifyPomAction implements Action {
           dataArrays.forEach(data -> dependencies.removeIf(
               dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
         }
+        if ("replace".equals(sign)) {
+          dataArrays.forEach(data -> {
+            if (dependencies.removeIf(dependency -> (((JSONObject) ((JSONObject) data).get("match"))
+                .getString("artifactId").equals(dependency.getArtifactId())))) {
+              JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
+              replacementArrays.forEach(replacementArray -> {
+                Dependency replaceDependency = genDependency(symbolValue(replacementArray, "groupId"),
+                    symbolValue(replacementArray, "artifactId"),
+                    symbolValue(replacementArray, "version"),
+                    null,
+                    null);
+                dependencies.add(replaceDependency);
+              });
+            }
+          });
+        }
       });
     }
   }
@@ -178,7 +196,7 @@ public abstract class ModifyPomAction implements Action {
       JSONArray jsonDependencyManagementArrays = JSONArray.parseArray(jsonPomDependencyManagements.toString());
       jsonDependencyManagementArrays.forEach(management -> {
         JSONObject managementJsonObject = JSONObject.parseObject(management.toString());
-        String sign = managementJsonObject.get("sign").toString();
+        String sign = managementJsonObject.get("operation").toString();
         JSONArray dataArrays = JSONArray.parseArray(managementJsonObject.get("data").toString());
         if ("add".equals(sign)) {
           dataArrays.forEach(data -> {
@@ -194,6 +212,22 @@ public abstract class ModifyPomAction implements Action {
           dataArrays.forEach(data -> managementDependencies.removeIf(
               dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
         }
+        if ("replace".equals(sign)) {
+          dataArrays.forEach(data -> {
+            if (managementDependencies.removeIf(managementDependency -> (((JSONObject) ((JSONObject) data).get("match"))
+                .getString("artifactId").equals(managementDependency.getArtifactId())))) {
+              JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
+              replacementArrays.forEach(replacementArray -> {
+                Dependency replaceDependency = genDependency(symbolValue(replacementArray, "groupId"),
+                    symbolValue(replacementArray, "artifactId"),
+                    symbolValue(replacementArray, "version"),
+                    symbolValue(replacementArray, "type"),
+                    symbolValue(replacementArray, "scope"));
+                managementDependencies.add(replaceDependency);
+              });
+            }
+          });
+        }
       });
     }
   }
@@ -206,13 +240,26 @@ public abstract class ModifyPomAction implements Action {
       jsonPropertiesArrays.forEach(property -> {
         JSONObject propertyJsonObject = JSONObject.parseObject(property.toString());
         JSONArray dataArrays = JSONArray.parseArray(propertyJsonObject.get("data").toString());
-        String sign = propertyJsonObject.get("sign").toString();
+        String sign = propertyJsonObject.get("operation").toString();
         if ("add".equals(sign)) {
           dataArrays.forEach(data -> mavenProperties.putIfAbsent(
-              symbolValue(data, "label"), symbolValue(data, "value")));
+              Objects.requireNonNull(symbolValue(data, "property")),
+              Objects.requireNonNull(symbolValue(data, "value"))));
         }
         if ("delete".equals(sign)) {
-          dataArrays.forEach(data -> mavenProperties.remove(symbolValue(data, "artifactId")));
+          dataArrays.forEach(data -> mavenProperties.remove(Objects.requireNonNull(symbolValue(data, "property"))));
+        }
+        if ("replace".equals(sign)) {
+          dataArrays.forEach(data -> {
+            String matchPropertyValue = ((JSONObject) ((JSONObject) data).get("match")).getString("property");
+            if (mavenProperties.containsKey(matchPropertyValue)) {
+              mavenProperties.remove(matchPropertyValue);
+              JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
+              replacementArrays.forEach(replacementArray -> mavenProperties
+                  .putIfAbsent(Objects.requireNonNull(symbolValue(replacementArray, "property")),
+                      Objects.requireNonNull(symbolValue(replacementArray, "value"))));
+            }
+          });
         }
       });
       model.setProperties(new OrderedWriteProperties(mavenProperties));
@@ -227,7 +274,7 @@ public abstract class ModifyPomAction implements Action {
     return result == null ? null : result.toString();
   }
 
-  private Plugin genPlugin(String groupId, String artifactId, String version, String type, String scope) {
+  private Plugin genPlugin(String groupId, String artifactId, String version) {
     Plugin plugin = new Plugin();
     plugin.setGroupId(groupId);
     plugin.setArtifactId(artifactId);

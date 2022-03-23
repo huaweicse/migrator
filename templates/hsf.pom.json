@@ -2,28 +2,28 @@
     "/**/": "模板文件，项目中必须以xxx.pom.json命名并放置在templates文件夹下，严格遵循以下格式",
     "properties" :  [
         {
-            "sign" :  "delete",
+            "operation" :  "delete",
             "data" : [
                 { 
-                    "artifactId" : "pandora-boot.version"
+                    "property" : "pandora-boot.version"
                 },
                 {
-                    "artifactId" : "spring-boot.version"
+                    "property" : "spring-boot.version"
                 }
             ]
         },
         {
-            "sign" : "add",
+            "operation" : "add",
             "data" :  [
                    {
-                       "label" :  "spring-boot.version",
+                       "property" :  "spring-boot.version",
                        "value" : "2.5.3"
                    },
                    { 
-                       "label" :  "spring-cloud.version",
+                       "property" :  "spring-cloud.version",
                        "value" : "2020.0.3"
                    },
-                   {   "label" :  "spring-cloud-huawei.version",
+                   {   "property" :  "spring-cloud-huawei.version",
                        "value" : "1.8.0-2020.0.x"
                    }
             ]
@@ -31,50 +31,51 @@
     ],
     "dependencyManagement.dependencies" :  [
         {
-            "sign" :  "delete",
-            "data" :  [
-                {  
-                    "artifactId" : "pandora-boot-starter-bom"
-                },
+            "operation" :  "delete",
+            "data" : [
                 {
                     "artifactId" : "spring-boot-dependencies"
                 }
             ]
         },
         {
-            "sign" :  "add",
+            "operation" :  "replace",
             "data" :  [
-                    {
-                        "groupId" :  "org.springframework.boot",
-                        "artifactId" : "spring-boot-dependencies",
-                        "version" : "${spring-boot.version}",
-                        "type" : "pom",
-                        "scope" : "import"
+                {
+                    "match" : {
+                        "artifactId": "pandora-boot-starter-bom"
                     },
-                   { 
-                       "groupId" :  "com.huaweicloud",
-                       "artifactId" : "spring-cloud-huawei-bom",
-                       "version" : "${spring-cloud-huawei.version}",
-                       "type" : "pom",
-                       "scope" : "import"
-                   },
-                   { 
-                       "groupId" :  "org.springframework.cloud",
-                       "artifactId" : "spring-cloud-dependencies",
-                       "version" : "${spring-cloud.version}",
-                       "type" : "pom",
-                       "scope" : "import"
-                   }
-			      ]
+                    "replacement": [
+                        {
+                            "groupId" :  "org.springframework.boot",
+                            "artifactId" : "spring-boot-dependencies",
+                            "version" : "${spring-boot.version}",
+                            "type" : "pom",
+                            "scope" : "import"
+                        },
+                        {
+                            "groupId" :  "com.huaweicloud",
+                            "artifactId" : "spring-cloud-huawei-bom",
+                            "version" : "${spring-cloud-huawei.version}",
+                            "type" : "pom",
+                            "scope" : "import"
+                        },
+                        {
+                            "groupId" :  "org.springframework.cloud",
+                            "artifactId" : "spring-cloud-dependencies",
+                            "version" : "${spring-cloud.version}",
+                            "type" : "pom",
+                            "scope" : "import"
+                        }
+                    ]
+                }
+            ]
         }
     ],
 	"dependencies" : [
         {
-            "sign" :  "delete",
+            "operation" :  "delete",
             "data" :  [
-                { 
-                    "artifactId" : "pandora-hsf-spring-boot-starter"
-                },
                 {
                     "artifactId" : "taobao-hsf.sar"
                 },
@@ -83,34 +84,43 @@
                 }
             ]
         },
-        {
-            "sign" :  "add",
-            "data" :  [
-                   { 
-                       "groupId" :  "com.huaweicloud",
-                       "artifactId" : "spring-cloud-starter-huawei-service-engine",
-                       "version" : ""
-                   },
-                   { 
-                       "groupId" :  "org.springframework.cloud",
-                       "artifactId" : "spring-cloud-starter-openfeign",
-                       "version" : ""
-                   }
-            ]
-        }
+      {
+          "operation" :  "replace",
+          "data" :  [
+              {
+                  "match" : {
+                      "artifactId": "pandora-hsf-spring-boot-starter"
+                  },
+                  "replacement": [
+                      {
+                          "groupId" :  "com.huaweicloud",
+                          "artifactId" : "spring-cloud-starter-huawei-service-engine",
+                          "version" : ""
+                      },
+                      {
+                          "groupId" :  "org.springframework.cloud",
+                          "artifactId" : "spring-cloud-starter-openfeign",
+                          "version" : ""
+                      }
+                  ]
+              }
+          ]
+      }
     ],
     "build.plugins" : [
         {
-            "sign" :  "replace",
+            "operation" :  "replace",
             "data" :  [
                 {
                     "match" : {
                         "artifactId": "pandora-boot-maven-plugin"
                     },
-                    "replacement": {
-                        "groupId" :  "org.springframework.boot",
-                        "artifactId" : "spring-boot-maven-plugin"
-                    }
+                    "replacement": [
+                        {
+                            "groupId" :  "org.springframework.boot",
+                            "artifactId" : "spring-boot-maven-plugin"
+                        }
+                    ]
                 }
             ]
         }
