@@ -2,36 +2,50 @@
     "/**/": "模板文件，项目中必须以xxx.pom.json命名并放置在templates文件夹下，严格遵循以下格式",
     "properties" :  [
         {
-            "sign" :  "delete",
+            "operation" :  "delete",
             "data" : [
                 {
-                    "artifactId" : "dubbo-version"
+                    "property" : "dubbo-version"
                 },
                 {
-                    "artifactId" : "spring-boot.version"
+                    "property" : "spring-boot.version"
                 }
             ]
         },
         {
-            "sign" : "add",
+            "operation" : "add",
             "data" :  [
                    {
-                       "label" :  "spring-boot.version",
+                       "property" :  "spring-boot.version",
                        "value" : "2.5.3"
                    },
                    { 
-                       "label" :  "spring-cloud.version",
+                       "property" :  "spring-cloud.version",
                        "value" : "2020.0.3"
                    },
-                   {   "label" :  "spring-cloud-huawei.version",
+                   {   "property" :  "spring-cloud-huawei.version",
                        "value" : "1.8.0-2020.0.x"
                    }
+            ]
+        },
+        {
+            "operation" :  "replace",
+            "data" :  [
+                {
+                    "match" : {
+                        "property": "dubbo-version"
+                    },
+                    "replacement": {
+                        "property" :  "spring-boot.version",
+                        "value" : "2.5.3"
+                    }
+                }
             ]
         }
     ],
     "dependencyManagement.dependencies" :  [
         {
-            "sign" :  "delete",
+            "operation" :  "delete",
             "data" :  [
                 {
                     "artifactId" : "dubbo-dependencies-bom"
@@ -42,7 +56,7 @@
             ]
         },
         {
-            "sign" :  "add",
+            "operation" :  "add",
             "data" :  [
                     {
                         "groupId" :  "org.springframework.boot",
@@ -70,7 +84,7 @@
     ],
 	"dependencies" : [
         {
-            "sign" :  "delete",
+            "operation" :  "delete",
             "data" :  [
                 {
                     "artifactId" : "dubbo-spring-boot-starter"
@@ -90,7 +104,7 @@
             ]
         },
         {
-            "sign" :  "add",
+            "operation" :  "add",
             "data" :  [
                    { 
                        "groupId" :  "com.huaweicloud",
@@ -107,7 +121,7 @@
     ],
     "build.plugins" : [
         {
-            "sign" :  "replace",
+            "operation" :  "replace",
             "data" :  [
                 {
                     "match" : {

@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Stream;
 
@@ -112,7 +113,7 @@ public abstract class ModifyPomAction implements Action {
         JSONArray jsonPluginArrays = JSONArray.parseArray(pluginsObj.toString());
         jsonPluginArrays.forEach(pluginData -> {
           JSONObject dependencyJsonObject = JSONObject.parseObject(pluginData.toString());
-          String sign = dependencyJsonObject.get("sign").toString();
+          String sign = dependencyJsonObject.get("operation").toString();
           JSONArray dataArrays = JSONArray.parseArray(dependencyJsonObject.get("data").toString());
           if ("add".equals(sign)) {
             dataArrays.forEach(data -> {
@@ -151,7 +152,7 @@ public abstract class ModifyPomAction implements Action {
       JSONArray jsonDependencyArrays = JSONArray.parseArray(jsonPomDependencies.toString());
       jsonDependencyArrays.forEach(dependencyData -> {
         JSONObject dependencyJsonObject = JSONObject.parseObject(dependencyData.toString());
-        String sign = dependencyJsonObject.get("sign").toString();
+        String sign = dependencyJsonObject.get("operation").toString();
         JSONArray dataArrays = JSONArray.parseArray(dependencyJsonObject.get("data").toString());
         if ("add".equals(sign)) {
           dataArrays.forEach(data -> {
@@ -166,6 +167,23 @@ public abstract class ModifyPomAction implements Action {
           dataArrays.forEach(data -> dependencies.removeIf(
               dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
         }
+        if ("replace".equals(sign)) {
+          dataArrays.forEach(data -> {
+            String matchPropertyValue = ((JSONObject) ((JSONObject) data).get("match")).getString("artifactId");
+            for (Dependency dependency : dependencies) {
+              if (matchPropertyValue.equals(dependency.getArtifactId())) {
+                dependencies.remove(dependency);
+                Object replacementData = ((JSONObject) data).get("replacement");
+                Dependency replaceDependency = genDependency(symbolValue(replacementData, "groupId"),
+                    symbolValue(replacementData, "artifactId"),
+                    symbolValue(replacementData, "version"),
+                    null,
+                    null);
+                dependencies.add(replaceDependency);
+              }
+            }
+          });
+        }
       });
     }
   }
@@ -173,12 +191,12 @@ public abstract class ModifyPomAction implements Action {
   private void processDependencyManagement(Model model, JSONObject pomJsonObject) {
     Object jsonPomDependencyManagements = pomJsonObject.get("dependencyManagement.dependencies");
     DependencyManagement dependencyManagement = model.getDependencyManagement();
-    if (!ObjectUtils.isEmpty(jsonPomDependencyManagements) && !ObjectUtils.isEmpty(dependencyManagement)) {
+    if (!ObjectUtils.isEmpty(jsonPomDependencyManagements)) {
       List<Dependency> managementDependencies = dependencyManagement.getDependencies();
       JSONArray jsonDependencyManagementArrays = JSONArray.parseArray(jsonPomDependencyManagements.toString());
       jsonDependencyManagementArrays.forEach(management -> {
         JSONObject managementJsonObject = JSONObject.parseObject(management.toString());
-        String sign = managementJsonObject.get("sign").toString();
+        String sign = managementJsonObject.get("operation").toString();
         JSONArray dataArrays = JSONArray.parseArray(managementJsonObject.get("data").toString());
         if ("add".equals(sign)) {
           dataArrays.forEach(data -> {
@@ -194,6 +212,23 @@ public abstract class ModifyPomAction implements Action {
           dataArrays.forEach(data -> managementDependencies.removeIf(
               dependency -> ((JSONObject) data).get("artifactId").toString().equals(dependency.getArtifactId())));
         }
+        if ("replace".equals(sign)) {
+          dataArrays.forEach(data -> {
+            String matchPropertyValue = ((JSONObject) ((JSONObject) data).get("match")).getString("artifactId");
+            for (Dependency dependency : managementDependencies) {
+              if (matchPropertyValue.equals(dependency.getArtifactId())) {
+                managementDependencies.remove(dependency);
+                Object replacementData = ((JSONObject) data).get("replacement");
+                Dependency replaceDependency = genDependency(symbolValue(replacementData, "groupId"),
+                    symbolValue(replacementData, "artifactId"),
+                    symbolValue(replacementData, "version"),
+                    symbolValue(replacementData, "type"),
+                    symbolValue(replacementData, "scope"));
+                managementDependencies.add(replaceDependency);
+              }
+            }
+          });
+        }
       });
     }
   }
@@ -206,13 +241,25 @@ public abstract class ModifyPomAction implements Action {
       jsonPropertiesArrays.forEach(property -> {
         JSONObject propertyJsonObject = JSONObject.parseObject(property.toString());
         JSONArray dataArrays = JSONArray.parseArray(propertyJsonObject.get("data").toString());
-        String sign = propertyJsonObject.get("sign").toString();
+        String sign = propertyJsonObject.get("operation").toString();
         if ("add".equals(sign)) {
           dataArrays.forEach(data -> mavenProperties.putIfAbsent(
-              symbolValue(data, "label"), symbolValue(data, "value")));
+              Objects.requireNonNull(symbolValue(data, "property")),
+              Objects.requireNonNull(symbolValue(data, "value"))));
         }
         if ("delete".equals(sign)) {
-          dataArrays.forEach(data -> mavenProperties.remove(symbolValue(data, "artifactId")));
+          dataArrays.forEach(data -> mavenProperties.remove(Objects.requireNonNull(symbolValue(data, "property"))));
+        }
+        if ("replace".equals(sign)) {
+          dataArrays.forEach(data -> {
+            String matchPropertyValue = ((JSONObject) ((JSONObject) data).get("match")).getString("property");
+            if (mavenProperties.containsKey(matchPropertyValue)) {
+              JSONObject replacementValue = (JSONObject) ((JSONObject) data).get("replacement");
+              mavenProperties.remove(matchPropertyValue);
+              mavenProperties.putIfAbsent(replacementValue.getString("property"),
+                  replacementValue.getString("value"));
+            }
+          });
         }
       });
       model.setProperties(new OrderedWriteProperties(mavenProperties));
