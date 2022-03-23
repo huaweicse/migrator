@@ -35,10 +35,12 @@
                     "match" : {
                         "property": "hsf-version"
                     },
-                    "replacement": {
-                        "property" :  "spring-boot.version",
-                        "value" : "2.5.3"
-                    }
+                    "replacement": [
+                        {
+                            "property" :  "spring-boot.version",
+                            "value" : "2.5.3"
+                        }
+                    ]
                 }
             ]
         }
@@ -88,13 +90,15 @@
                     "match" : {
                         "artifactId": "pandora-boot-starter-bom"
                     },
-                    "replacement": {
-                        "groupId" :  "org.springframework.cloud",
-                        "artifactId" : "spring-cloud-dependencies",
-                        "version" : "${spring-cloud.version}",
-                        "type" : "pom",
-                        "scope" : "import"
-                    }
+                    "replacement": [
+                        {
+                            "groupId" :  "org.springframework.cloud",
+                            "artifactId" : "spring-cloud-dependencies",
+                            "version" : "${spring-cloud.version}",
+                            "type" : "pom",
+                            "scope" : "import"
+                        }
+                    ]
                 }
             ]
         }
@@ -136,11 +140,13 @@
                   "match" : {
                       "artifactId": "pandora-boot-test"
                   },
-                  "replacement": {
-                      "groupId" :  "org.springframework.cloud",
-                      "artifactId" : "spring-cloud-starter-openfeign",
-                      "version" : ""
-                  }
+                  "replacement": [
+                      {
+                          "groupId" :  "org.springframework.cloud",
+                          "artifactId" : "spring-cloud-starter-openfeign",
+                          "version" : ""
+                      }
+                  ]
               }
           ]
       }
@@ -153,10 +159,12 @@
                     "match" : {
                         "artifactId": "pandora-boot-maven-plugin"
                     },
-                    "replacement": {
-                        "groupId" :  "org.springframework.boot",
-                        "artifactId" : "spring-boot-maven-plugin"
-                    }
+                    "replacement": [
+                        {
+                            "groupId" :  "org.springframework.boot",
+                            "artifactId" : "spring-boot-maven-plugin"
+                        }
+                    ]
                 }
             ]
         }

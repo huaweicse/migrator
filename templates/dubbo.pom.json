@@ -35,10 +35,12 @@
                     "match" : {
                         "property": "dubbo-version"
                     },
-                    "replacement": {
-                        "property" :  "spring-boot.version",
-                        "value" : "2.5.3"
-                    }
+                    "replacement": [
+                        {
+                            "property" :  "spring-boot.version",
+                            "value" : "2.5.3"
+                        }
+                    ]
                 }
             ]
         }
@@ -127,10 +129,12 @@
                     "match" : {
                         "artifactId": "pandora-boot-maven-plugin"
                     },
-                    "replacement": {
-                        "groupId" :  "org.springframework.boot",
-                        "artifactId" : "spring-boot-maven-plugin"
-                    }
+                    "replacement": [
+                        {
+                            "groupId" :  "org.springframework.boot",
+                            "artifactId" : "spring-boot-maven-plugin"
+                        }
+                    ]
                 }
             ]
         }

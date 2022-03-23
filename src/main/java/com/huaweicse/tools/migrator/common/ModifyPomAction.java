@@ -119,8 +119,7 @@ public abstract class ModifyPomAction implements Action {
             dataArrays.forEach(data -> {
               Plugin plugin = genPlugin(symbolValue(data, "groupId"),
                   symbolValue(data, "artifactId"),
-                  symbolValue(data, "version"),
-                  null, null);
+                  symbolValue(data, "version"));
               plugins.add(plugin);
             });
           }
@@ -131,12 +130,14 @@ public abstract class ModifyPomAction implements Action {
           if ("replace".equals(sign)) {
             dataArrays.forEach(data -> {
               if (plugins.removeIf(plugin -> (((JSONObject) ((JSONObject) data).get("match"))
-                  .get("artifactId").toString().equals(plugin.getArtifactId())))) {
-                Plugin plugin = genPlugin(symbolValue(data, "replacement", "groupId"),
-                    symbolValue(data, "replacement", "artifactId"),
-                    symbolValue(data, "replacement", "version"),
-                    null, null);
-                plugins.add(plugin);
+                  .getString("artifactId").equals(plugin.getArtifactId())))) {
+                JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
+                replacementArrays.forEach(replacementArray -> {
+                  Plugin plugin = genPlugin(symbolValue(replacementArray, "groupId"),
+                      symbolValue(replacementArray, "artifactId"),
+                      symbolValue(replacementArray, "version"));
+                  plugins.add(plugin);
+                });
               }
             });
           }
@@ -173,13 +174,15 @@ public abstract class ModifyPomAction implements Action {
             for (Dependency dependency : dependencies) {
               if (matchPropertyValue.equals(dependency.getArtifactId())) {
                 dependencies.remove(dependency);
-                Object replacementData = ((JSONObject) data).get("replacement");
-                Dependency replaceDependency = genDependency(symbolValue(replacementData, "groupId"),
-                    symbolValue(replacementData, "artifactId"),
-                    symbolValue(replacementData, "version"),
-                    null,
-                    null);
-                dependencies.add(replaceDependency);
+                JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
+                replacementArrays.forEach(replacementArray -> {
+                  Dependency replaceDependency = genDependency(symbolValue(replacementArray, "groupId"),
+                      symbolValue(replacementArray, "artifactId"),
+                      symbolValue(replacementArray, "version"),
+                      null,
+                      null);
+                  dependencies.add(replaceDependency);
+                });
               }
             }
           });
@@ -218,13 +221,15 @@ public abstract class ModifyPomAction implements Action {
             for (Dependency dependency : managementDependencies) {
               if (matchPropertyValue.equals(dependency.getArtifactId())) {
                 managementDependencies.remove(dependency);
-                Object replacementData = ((JSONObject) data).get("replacement");
-                Dependency replaceDependency = genDependency(symbolValue(replacementData, "groupId"),
-                    symbolValue(replacementData, "artifactId"),
-                    symbolValue(replacementData, "version"),
-                    symbolValue(replacementData, "type"),
-                    symbolValue(replacementData, "scope"));
-                managementDependencies.add(replaceDependency);
+                JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
+                replacementArrays.forEach(replacementArray -> {
+                  Dependency replaceDependency = genDependency(symbolValue(replacementArray, "groupId"),
+                      symbolValue(replacementArray, "artifactId"),
+                      symbolValue(replacementArray, "version"),
+                      symbolValue(replacementArray, "type"),
+                      symbolValue(replacementArray, "scope"));
+                  managementDependencies.add(replaceDependency);
+                });
               }
             }
           });
@@ -254,10 +259,11 @@ public abstract class ModifyPomAction implements Action {
           dataArrays.forEach(data -> {
             String matchPropertyValue = ((JSONObject) ((JSONObject) data).get("match")).getString("property");
             if (mavenProperties.containsKey(matchPropertyValue)) {
-              JSONObject replacementValue = (JSONObject) ((JSONObject) data).get("replacement");
               mavenProperties.remove(matchPropertyValue);
-              mavenProperties.putIfAbsent(replacementValue.getString("property"),
-                  replacementValue.getString("value"));
+              JSONArray replacementArrays = JSONArray.parseArray(((JSONObject) data).getString("replacement"));
+              replacementArrays.forEach(replacementArray -> mavenProperties
+                  .putIfAbsent(Objects.requireNonNull(symbolValue(replacementArray, "property")),
+                      Objects.requireNonNull(symbolValue(replacementArray, "value"))));
             }
           });
         }
@@ -274,7 +280,7 @@ public abstract class ModifyPomAction implements Action {
     return result == null ? null : result.toString();
   }
 
-  private Plugin genPlugin(String groupId, String artifactId, String version, String type, String scope) {
+  private Plugin genPlugin(String groupId, String artifactId, String version) {
     Plugin plugin = new Plugin();
     plugin.setGroupId(groupId);
     plugin.setArtifactId(artifactId);
