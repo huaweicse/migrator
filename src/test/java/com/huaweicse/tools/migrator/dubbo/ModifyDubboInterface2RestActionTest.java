@@ -39,7 +39,7 @@ public class ModifyDubboInterface2RestActionTest {
 
 
   @Test
-  public void testModifyHSFProviderAction() throws Exception {
+  public void testModifyDubboInterface2RestActionTest() throws Exception {
     modifyDubboInterface2RestAction.run(TEMP_DIR_PATH);
     String fileName = "HelloService.java";
     Utils.assertFileContentEquals(

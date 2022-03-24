@@ -41,7 +41,7 @@ public class ModifyDubboServiceActionTest {
 
 
   @Test
-  public void testModifyHSFProviderAction() throws Exception {
+  public void testModifyDubboServiceActionTest() throws Exception {
     modifyDubboServiceAction.run(TEMP_DIR_PATH + fileSeparator + "input");
 
     String fileName = "HelloServiceImpl.java";

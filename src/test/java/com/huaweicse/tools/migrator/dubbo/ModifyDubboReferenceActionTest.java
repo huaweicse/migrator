@@ -39,7 +39,7 @@ public class ModifyDubboReferenceActionTest {
 
 
   @Test
-  public void testModifyHSFProviderAction() throws Exception {
+  public void testModifyDubboReferenceActionTest() throws Exception {
     modifyDubboReferenceAction.run(TEMP_DIR_PATH);
     String consumerControllerFileName = "DubboConsumerController.java";
     String interfaceConfigFileName = "DubboInterfaceConfig.java";
