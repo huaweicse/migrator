@@ -46,7 +46,6 @@ public class ModifyDubboInterface2RestActionTest {
         BASE_PATH + fileSeparator
             + "testfiles" + fileSeparator + "ModifyDubboInterface2RestActionTest" + fileSeparator
             + "output" + fileSeparator + fileName,
-        TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator
-            + "consumer" + fileSeparator + fileName);
+        TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + fileName);
   }
 }

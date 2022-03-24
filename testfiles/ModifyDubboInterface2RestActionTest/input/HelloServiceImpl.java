@@ -1,4 +1,4 @@
-package com.huaweicloud.sample;
+package com.huaweicse.test.api;
 
 import org.apache.dubbo.config.annotation.DubboService;
 
