@@ -39,13 +39,18 @@ public class ModifyDubboReferenceActionTest {
 
 
   @Test
-  public void testModifyHSFProviderAction() throws Exception {
+  public void testModifyDubboReferenceActionTest() throws Exception {
     modifyDubboReferenceAction.run(TEMP_DIR_PATH);
-    String fileName = "DubboConsumerController.java";
-    Utils.assertFileContentEquals(
-        BASE_PATH + fileSeparator
-            + "testfiles" + fileSeparator + "ModifyDubboReferenceActionTest" + fileSeparator
-            + "output" + fileSeparator + fileName,
-        TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + fileName);
+    String consumerControllerFileName = "DubboConsumerController.java";
+    String interfaceConfigFileName = "DubboInterfaceConfig.java";
+    String baseCommonPath = BASE_PATH + fileSeparator + "testfiles" + fileSeparator +
+        "ModifyDubboReferenceActionTest" + fileSeparator + "output" + fileSeparator;
+    String tempCommonPath = TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + "consumer" + fileSeparator
+        + "src" + fileSeparator + "main" + fileSeparator + "java" + fileSeparator + "com" + fileSeparator
+        + "huaweicse" + fileSeparator;
+    Utils.assertFileContentEquals(baseCommonPath + consumerControllerFileName,
+        tempCommonPath + "test" + fileSeparator + consumerControllerFileName);
+    Utils.assertFileContentEquals(baseCommonPath + interfaceConfigFileName,
+        tempCommonPath + "config" + fileSeparator + interfaceConfigFileName);
   }
 }

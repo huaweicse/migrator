@@ -1,7 +1,8 @@
+package com.huaweicse.test;
 
 import org.apache.dubbo.config.annotation.DubboReference;
 
-import com.huaweicloud.sample.api.HelloService;
+import com.huaweicse.test.api.HelloService;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
