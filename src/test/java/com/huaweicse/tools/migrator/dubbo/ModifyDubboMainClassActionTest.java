@@ -42,9 +42,15 @@ public class ModifyDubboMainClassActionTest {
   @Test
   public void testProcessMainClass() throws Exception {
     modifyDubboMainClassAction.run(TEMP_DIR_PATH);
-    Utils.assertFileContentEquals(
-        TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + "DubboConsumerApplication.java",
+    String fileName = "DubboConsumerApplication.java";
+    String outputFilePath =
         BASE_PATH + fileSeparator + "testfiles" + fileSeparator + "ModifyDubboMainClassActionTest" + fileSeparator +
-            "output" + fileSeparator + "DubboConsumerApplication.java");
+            "output" + fileSeparator + fileName;
+    Utils.assertFileContentEquals(inputTestFilePath("dubbo-annotation", fileName), outputFilePath);
+    Utils.assertFileContentEquals(inputTestFilePath("dubbo-springboot", fileName), outputFilePath);
+  }
+
+  private String inputTestFilePath(String styleType, String fileName) {
+    return TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + styleType + fileSeparator + fileName;
   }
 }
