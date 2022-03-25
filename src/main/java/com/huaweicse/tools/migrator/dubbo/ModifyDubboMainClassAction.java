@@ -29,6 +29,9 @@ public class ModifyDubboMainClassAction extends FileAction {
   @Value("${dubbo.enableDubbo.packageName:org.apache.dubbo.config.spring.context.annotation.EnableDubbo}")
   private String enableDubboPackageName;
 
+  @Value("${spring.propertySource.packageName:org.springframework.context.annotation.PropertySource}")
+  private String propertySourcePackageName;
+
   @Value("${spring.enableDiscoveryClient.packageName:org.springframework.cloud.client.discovery.EnableDiscoveryClient}")
   private String enableDiscoveryClient;
 
@@ -57,6 +60,9 @@ public class ModifyDubboMainClassAction extends FileAction {
         List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
         CharArrayWriter tempStream = new CharArrayWriter();
         for (String line : lines) {
+          if (line.contains(propertySourcePackageName)){
+            continue;
+          }
           if (line.startsWith("import") && line.contains(ENABLE_DUBBO)) {
             line = line.replace(enableDubboPackageName, enableDiscoveryClient);
             tempStream.write(line);
@@ -66,6 +72,9 @@ public class ModifyDubboMainClassAction extends FileAction {
             continue;
           }
           if (line.startsWith("@")) {
+            if (line.trim().startsWith("@PropertySource")){
+              continue;
+            }
             if (line.contains(ENABLE_DUBBO)) {
               tempStream.write("@EnableDiscoveryClient");
               tempStream.append(LINE_SEPARATOR);

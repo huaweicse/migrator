@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,7 +78,8 @@ public class ModifyDubboReferenceAction extends FileAction {
     targetInterfaceInfo(interfaceExposeFiles);
     acceptedFiles.removeAll(interfaceExposeFiles);
     List<File> resourceFile = acceptedFiles.stream()
-        .filter(file -> (file.getName().endsWith(".yml"))).collect(Collectors.toList());
+        .filter(file -> ((file.getName().endsWith(".yml")) || file.getName().endsWith(".properties")))
+        .collect(Collectors.toList());
     loadResourceFile(resourceFile);
     acceptedFiles.removeAll(resourceFile);
     replaceContent(acceptedFiles);
@@ -87,7 +89,7 @@ public class ModifyDubboReferenceAction extends FileAction {
 
   @Override
   protected boolean isAcceptedFile(File file) throws IOException {
-    if (file.getName().endsWith(".java") || file.getName().endsWith(".yml")) {
+    if (file.getName().endsWith(".java") || file.getName().endsWith(".yml") || file.getName().endsWith(".properties")) {
       return file.getName().endsWith(".java") ?
           (fileContains(file, DUBBO_SERVICE) || fileContains(file, DUBBO_REFERENCE)) : fileContains(file, "dubbo");
     }
@@ -269,9 +271,17 @@ public class ModifyDubboReferenceAction extends FileAction {
     resourceFile.forEach(file -> {
       try {
         FileInputStream inputStream = new FileInputStream(file);
-        Map<String, Object> map = new Yaml().loadAs(inputStream, Map.class);
-        String microserviceName = (String) Objects
-            .requireNonNull(initYml(Objects.requireNonNull(initYml(map, "dubbo")), "application")).get("name");
+        String microserviceName = null;
+        if (file.getName().endsWith(".yml")) {
+          Map<String, Object> map = new Yaml().loadAs(inputStream, Map.class);
+          microserviceName = (String) Objects
+              .requireNonNull(initYml(Objects.requireNonNull(initYml(map, "dubbo")), "application")).get("name");
+        }
+        if (file.getName().endsWith(".properties")) {
+          Properties properties = new Properties();
+          properties.load(inputStream);
+          microserviceName = properties.getProperty("dubbo.application.name");
+        }
         microserviceNameDataMap
             .putIfAbsent(file.getAbsolutePath().substring(0, file.getAbsolutePath().indexOf("resources")),
                 microserviceName);
