@@ -3,7 +3,7 @@ server:
 
 dubbo:
   application:
-    name: dubbo-consumer
+    name: dubbo-springboot-consumer
   protocol:
     name: dubbo
     port: 20880
