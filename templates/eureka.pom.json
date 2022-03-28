@@ -1,0 +1,112 @@
+{
+    "/**/": "模板文件，项目中必须以xxx.pom.json命名并放置在templates文件夹下，严格遵循以下格式",
+    "properties" :  [
+        {
+            "operation" :  "delete",
+            "data" : [
+                {
+                    "property" : "spring-cloud.version"
+                },
+                {
+                    "property" : "spring-boot.version"
+                }
+            ]
+        },
+        {
+            "operation" : "add",
+            "data" :  [
+                   {
+                       "property" :  "spring-boot.version",
+                       "value" : "2.5.3"
+                   },
+                   { 
+                       "property" :  "spring-cloud.version",
+                       "value" : "2020.0.3"
+                   },
+                   {   "property" :  "spring-cloud-huawei.version",
+                       "value" : "1.8.0-2020.0.x"
+                   }
+            ]
+        }
+    ],
+    "dependencyManagement.dependencies" :  [
+        {
+            "operation" :  "delete",
+            "data" :  [
+                {
+                    "artifactId" : ""
+                },
+                {
+                    "artifactId" : ""
+                }
+            ]
+        },
+        {
+            "operation" :  "add",
+            "data" :  [
+                   { 
+                       "groupId" :  "com.huaweicloud",
+                       "artifactId" : "spring-cloud-huawei-bom",
+                       "version" : "${spring-cloud-huawei.version}",
+                       "type" : "pom",
+                       "scope" : "import"
+                   }
+			      ]
+        }
+    ],
+	"dependencies" : [
+      {
+          "operation" :  "delete",
+          "data" :  [
+              {
+                  "artifactId" : "spring-cloud-starter-netflix-eureka-client"
+              }
+          ]
+      },
+      {
+          "operation" :  "add",
+          "data" :  [
+              {
+                  "groupId" :  "com.huaweicloud",
+                  "artifactId" : "spring-cloud-starter-huawei-service-engine",
+                  "version" : ""
+              }
+          ]
+      },
+      {
+          "operation" :  "replace",
+          "data" :  [
+              {
+                  "match" : {
+                      "artifactId": "spring-cloud-starter-netflix-eureka-server"
+                  },
+                  "replacement": [
+                      {
+                          "groupId" :  "com.huaweicloud",
+                          "artifactId" : "spring-cloud-starter-huawei-service-engine",
+                          "version" : ""
+                      }
+                  ]
+              }
+          ]
+      }
+    ],
+    "build.plugins" : [
+        {
+            "operation" :  "",
+            "data" :  [
+                {
+                    "match" : {
+                        "artifactId": ""
+                    },
+                    "replacement": [
+                        {
+                            "groupId" :  "",
+                            "artifactId" : ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
