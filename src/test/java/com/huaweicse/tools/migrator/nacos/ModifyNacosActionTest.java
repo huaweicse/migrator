@@ -40,26 +40,9 @@ public class ModifyNacosActionTest {
   }
 
   @Test
-  public void testaddBootstrapFile() throws Exception {
+  public void testModifyNacosAction() throws Exception {
     modifyNacosAction.run(TEMP_DIR_PATH + fileSeparator + "input");
-    Utils.assertFileContentEquals(addBootstrapFilePath("provider"), outputFilePath("bootstrap.yml"));
-    Utils.assertFileContentEquals(addBootstrapFilePath("consumer"), outputFilePath("bootstrap.yml"));
-    Utils.assertFileContentEquals(modifiedPomFilePath(""), outputFilePath("parent.pom.xml"));
-    Utils.assertFileContentEquals(modifiedPomFilePath("provider"), outputFilePath("provider.pom.xml"));
-    Utils.assertFileContentEquals(modifiedPomFilePath("consumer"), outputFilePath("consumer.pom.xml"));
-  }
-
-  private String modifiedPomFilePath(String role) {
-    return TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + role + fileSeparator + "pom.xml";
-  }
-
-  private String addBootstrapFilePath(String role) {
-    return TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + role + fileSeparator + "src" + fileSeparator
-        + "main" + fileSeparator + "resources" + fileSeparator + "bootstrap.yml";
-  }
-
-  private String outputFilePath(String fileName) {
-    return BASE_PATH + fileSeparator + "testfiles" + fileSeparator + "ModifyNacosActionTest" + fileSeparator +
-        "output" + fileSeparator + fileName;
+    Utils.assertFolderAllFileContentEquals(TEMP_DIR_PATH + fileSeparator + "input",
+        BASE_PATH + fileSeparator + "testfiles" + fileSeparator + "ModifyNacosActionTest" + fileSeparator + "output");
   }
 }
