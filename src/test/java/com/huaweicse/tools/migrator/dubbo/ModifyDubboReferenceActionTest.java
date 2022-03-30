@@ -33,7 +33,6 @@ public class ModifyDubboReferenceActionTest {
     FileUtils.copyDirectoryToDirectory(new File(BASE_PATH + fileSeparator
             + "testfiles" + fileSeparator + "ModifyDubboReferenceActionTest" + fileSeparator + "input"),
         new File(TEMP_DIR_PATH));
-    modifyDubboReferenceAction.run(TEMP_DIR_PATH);
   }
 
   @AfterAll
@@ -43,22 +42,35 @@ public class ModifyDubboReferenceActionTest {
 
   @Test
   public void testModifyDubboReferenceActionTest_Springboot() throws Exception {
+    modifyDubboReferenceAction.run(TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + "dubbo-springboot");
     String consumerControllerFileName = "DubboSpringBootConsumerController.java";
     String interfaceConfigFileName = "DubboInterfaceConfig.java";
     Utils.assertFileContentEquals(outputTestFilePath("dubbo-springboot", consumerControllerFileName),
-        modifiedTestFilePath("dubbo-springboot") + "test" + fileSeparator + consumerControllerFileName);
+        modifiedTestFilePath("dubbo-springboot", "consumer") + "test" + fileSeparator + consumerControllerFileName);
     Utils.assertFileContentEquals(outputTestFilePath("dubbo-springboot", interfaceConfigFileName),
-        modifiedTestFilePath("dubbo-springboot") + "config" + fileSeparator + interfaceConfigFileName);
+        modifiedTestFilePath("dubbo-springboot", "consumer") + "config" + fileSeparator + interfaceConfigFileName);
   }
 
   @Test
   public void testModifyDubboReferenceActionTest_Annotation() throws Exception {
+    modifyDubboReferenceAction.run(TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + "dubbo-annotation");
     String consumerControllerFileName = "DubboAnnotationConsumerController.java";
     String interfaceConfigFileName = "DubboInterfaceConfig.java";
     Utils.assertFileContentEquals(outputTestFilePath("dubbo-annotation", consumerControllerFileName),
-        modifiedTestFilePath("dubbo-annotation") + "test" + fileSeparator + consumerControllerFileName);
+        modifiedTestFilePath("dubbo-annotation", "consumer") + "test" + fileSeparator + consumerControllerFileName);
     Utils.assertFileContentEquals(outputTestFilePath("dubbo-annotation", interfaceConfigFileName),
-        modifiedTestFilePath("dubbo-annotation") + "config" + fileSeparator + interfaceConfigFileName);
+        modifiedTestFilePath("dubbo-annotation", "consumer") + "config" + fileSeparator + interfaceConfigFileName);
+  }
+
+  @Test
+  public void testModifyDubboReferenceActionTest_Xml() throws Exception {
+    modifyDubboReferenceAction.run(TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + "dubbo-xml");
+    String interfaceImplFileName = "HelloXmlServiceImpl.java";
+    String interfaceConfigFileName = "DubboInterfaceConfig.java";
+    Utils.assertFileContentEquals(outputTestFilePath("dubbo-xml", interfaceImplFileName),
+        modifiedTestFilePath("dubbo-xml", "provider") + "test" + fileSeparator + interfaceImplFileName);
+    Utils.assertFileContentEquals(outputTestFilePath("dubbo-xml", interfaceConfigFileName),
+        modifiedTestFilePath("dubbo-xml", "consumer") + "config" + fileSeparator + interfaceConfigFileName);
   }
 
   private String outputTestFilePath(String styleName, String fileName) {
@@ -66,8 +78,8 @@ public class ModifyDubboReferenceActionTest {
         fileSeparator + "output" + fileSeparator + styleName + fileSeparator + fileName;
   }
 
-  private String modifiedTestFilePath(String styleName) {
-    return TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + styleName + fileSeparator + "consumer"
+  private String modifiedTestFilePath(String styleName, String roleName) {
+    return TEMP_DIR_PATH + fileSeparator + "input" + fileSeparator + styleName + fileSeparator + roleName
         + fileSeparator + "src" + fileSeparator + "main" + fileSeparator + "java" + fileSeparator +
         "com" + fileSeparator + "huaweicse" + fileSeparator;
   }

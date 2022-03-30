@@ -20,8 +20,8 @@
     <java.version>1.8</java.version>
     <fastJson.version>1.2.79</fastJson.version>
     <commons-io.version>2.11.0</commons-io.version>
-    <junit.version>4.13.1</junit.version>
     <maven-model.version>3.8.4</maven-model.version>
+    <dom4j.version>1.6.1</dom4j.version>
   </properties>
 
   <dependencies>
@@ -48,16 +48,15 @@
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
     </dependency>
+    <dependency>
+      <groupId>dom4j</groupId>
+      <artifactId>dom4j</artifactId>
+      <version>${dom4j.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

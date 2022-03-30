@@ -48,6 +48,7 @@ public class ModifyDubboMainClassActionTest {
             "output" + fileSeparator + fileName;
     Utils.assertFileContentEquals(inputTestFilePath("dubbo-annotation", fileName), outputFilePath);
     Utils.assertFileContentEquals(inputTestFilePath("dubbo-springboot", fileName), outputFilePath);
+    Utils.assertFileContentEquals(inputTestFilePath("dubbo-xml", fileName), outputFilePath);
   }
 
   private String inputTestFilePath(String styleType, String fileName) {

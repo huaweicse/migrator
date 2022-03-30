@@ -8,16 +8,21 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import com.huaweicse.tools.migrator.common.FileAction;
 import com.huaweicse.tools.migrator.common.ParamValueType;
@@ -55,16 +60,41 @@ public class ModifyDubboInterface2RestAction extends FileAction {
   @Override
   public void run(String... args) throws Exception {
     List<File> acceptedFiles = acceptedFiles(args[0]);
-    List<File> interfaceExposeFiles = new ArrayList<>();
-    for (File file : acceptedFiles) {
-      if (file.getName().endsWith("java") && fileContains(file, DUBBO_SERVICE)) {
-        interfaceExposeFiles.add(file);
+    List<File> xmlFiles = acceptedFiles.stream().filter(file -> file.getName().endsWith(".xml"))
+        .collect(Collectors.toList());
+    if (!ObjectUtils.isEmpty(xmlFiles)) {
+      parseXmlGetInterfaceNameList(xmlFiles);
+      acceptedFiles.removeAll(xmlFiles);
+    } else {
+      List<File> interfaceExposeFiles = new ArrayList<>();
+      for (File file : acceptedFiles) {
+        if (file.getName().endsWith("java") && fileContains(file, DUBBO_SERVICE)) {
+          interfaceExposeFiles.add(file);
+        }
       }
+      targetInterfaceName(interfaceExposeFiles);
+      acceptedFiles.removeAll(interfaceExposeFiles);
     }
-    targetInterfaceName(interfaceExposeFiles);
-    acceptedFiles.removeAll(interfaceExposeFiles);
     replaceContent(acceptedFiles, interfaceNameList);
   }
+
+  private void parseXmlGetInterfaceNameList(List<File> xmlFiles) {
+    xmlFiles.forEach(file -> {
+      try {
+        SAXReader saxReader = new SAXReader();
+        Element rootElement = saxReader.read(file).getRootElement();
+        Iterator interfaceServices = rootElement.elementIterator("service");
+        while (interfaceServices.hasNext()) {
+          Element next = (Element) interfaceServices.next();
+          String str = next.attribute("interface").getValue();
+          interfaceNameList.add(str.substring(str.lastIndexOf(".") + 1));
+        }
+      } catch (DocumentException e) {
+        LOGGER.error("Process xml file [{}] to get interfaceName failed", file.getAbsolutePath(), e);
+      }
+    });
+  }
+
 
   private void targetInterfaceName(List<File> interfaceExposeFiles) throws IOException {
     for (File file : interfaceExposeFiles) {
@@ -92,8 +122,9 @@ public class ModifyDubboInterface2RestAction extends FileAction {
 
   @Override
   protected boolean isAcceptedFile(File file) throws IOException {
-    if (file.getName().endsWith(".java")) {
-      return fileContains(file, DUBBO_SERVICE) || fileContains(file, "interface");
+    if (file.getName().endsWith(".java") || file.getName().endsWith(".xml")) {
+      return file.getName().endsWith(".xml") ? fileContains(file, "dubbo:service")
+          : fileContains(file, DUBBO_SERVICE) || fileContains(file, "interface");
     }
     return false;
   }
