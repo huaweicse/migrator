@@ -38,7 +38,12 @@ public class ModifyDubboMainClassAction extends FileAction {
   @Value("${spring.enableFeignClients.packageName:org.springframework.cloud.openfeign.EnableFeignClients}")
   private String enableFeignClientsPackageName;
 
-  private static final String ENABLE_DUBBO = "EnableDubbo";
+  @Value("${spring.importResource.packageName:org.springframework.context.annotation.ImportResource}")
+  private String importResourcePackageName;
+
+  private static final String ENABLE_DUBBO = "@EnableDubbo";
+
+  private static final String IMPORT_RESOURCE = "@ImportResource";
 
   @Override
   public void run(String... args) throws Exception {
@@ -51,7 +56,7 @@ public class ModifyDubboMainClassAction extends FileAction {
     if (!file.getName().endsWith(".java")) {
       return false;
     }
-    return fileContains(file, ENABLE_DUBBO);
+    return fileContains(file, ENABLE_DUBBO) || fileContains(file, IMPORT_RESOURCE);
   }
 
   private void replaceContent(List<File> acceptedFiles) {
@@ -60,29 +65,26 @@ public class ModifyDubboMainClassAction extends FileAction {
         List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
         CharArrayWriter tempStream = new CharArrayWriter();
         for (String line : lines) {
-          if (line.contains(propertySourcePackageName)){
+          if (line.contains(propertySourcePackageName)) {
             continue;
           }
-          if (line.startsWith("import") && line.contains(ENABLE_DUBBO)) {
+          if (line.startsWith("import") && (line.contains(enableDubboPackageName) || line
+              .contains(importResourcePackageName))) {
             line = line.replace(enableDubboPackageName, enableDiscoveryClient);
+            line = line.replace(importResourcePackageName, enableDiscoveryClient);
             tempStream.write(line);
             tempStream.append(LINE_SEPARATOR);
             tempStream.write("import " + enableFeignClientsPackageName + ";");
             tempStream.append(LINE_SEPARATOR);
             continue;
           }
-          if (line.startsWith("@")) {
-            if (line.trim().startsWith("@PropertySource")){
-              continue;
-            }
-            if (line.contains(ENABLE_DUBBO)) {
-              tempStream.write("@EnableDiscoveryClient");
-              tempStream.append(LINE_SEPARATOR);
-              tempStream.write("@EnableFeignClients");
-              tempStream.append(LINE_SEPARATOR);
-              continue;
-            }
-            tempStream.write(line);
+          if (line.trim().startsWith("@PropertySource")) {
+            continue;
+          }
+          if (line.trim().startsWith(ENABLE_DUBBO) || line.trim().startsWith(IMPORT_RESOURCE)) {
+            tempStream.write("@EnableDiscoveryClient");
+            tempStream.append(LINE_SEPARATOR);
+            tempStream.write("@EnableFeignClients");
             tempStream.append(LINE_SEPARATOR);
             continue;
           }

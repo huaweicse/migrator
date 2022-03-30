@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,10 +23,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import com.huaweicse.tools.migrator.common.FileAction;
@@ -52,6 +57,12 @@ public class ModifyDubboReferenceAction extends FileAction {
   @Value("${spring.configuration.packageName:org.springframework.context.annotation.Configuration}")
   private String configurationPackageName;
 
+  @Value("${spring.requestMapping.packageName:org.springframework.web.bind.annotation.RequestMapping}")
+  private String requestMappingPackageName;
+
+  @Value("${spring.restController.packageName:org.springframework.web.bind.annotation.RestController}")
+  private String restControllerPackageName;
+
   private static final String INTERFACE_REGEX_PATTERN = "implements [a-zA-Z][a-zA-Z0-9]*";
 
   private static final String DUBBO_REFERENCE = "@DubboReference";
@@ -62,6 +73,8 @@ public class ModifyDubboReferenceAction extends FileAction {
 
   private Map<String, String> microserviceNameDataMap = new HashMap<>();
 
+  private List<File> interfaceImplFileList = new ArrayList<>();
+
   private List<String> interfaceData = new ArrayList<>();
 
   private Set<File> feignFileDirs = new HashSet<>();
@@ -69,29 +82,94 @@ public class ModifyDubboReferenceAction extends FileAction {
   @Override
   public void run(String... args) throws Exception {
     List<File> acceptedFiles = acceptedFiles(args[0]);
-    List<File> interfaceExposeFiles = new ArrayList<>();
-    for (File file : acceptedFiles) {
-      if (file.getName().endsWith("java") && fileContains(file, DUBBO_SERVICE)) {
-        interfaceExposeFiles.add(file);
-      }
-    }
-    targetInterfaceInfo(interfaceExposeFiles);
-    acceptedFiles.removeAll(interfaceExposeFiles);
-    List<File> resourceFile = acceptedFiles.stream()
-        .filter(file -> ((file.getName().endsWith(".yml")) || file.getName().endsWith(".properties")))
+    List<File> xmlFiles = acceptedFiles.stream().filter(file -> file.getName().endsWith(".xml"))
         .collect(Collectors.toList());
-    loadResourceFile(resourceFile);
-    acceptedFiles.removeAll(resourceFile);
-    replaceContent(acceptedFiles);
-    feignClientConfigDirPath(acceptedFiles);
+    if (!ObjectUtils.isEmpty(xmlFiles)) {
+      parseXmlGetMicroserviceAndInterfaceInfo(xmlFiles);
+      acceptedFiles.removeAll(xmlFiles);
+      modifyInterfaceImplFileContent();
+      List<File> tempFeignFileList = new ArrayList<>();
+      for (File acceptedFile : acceptedFiles) {
+        for (String key : interfaceDataMap.keySet()) {
+          if (acceptedFile.getAbsolutePath().contains(key)) {
+            Set<String> values = interfaceDataMap.get(key);
+            for (String value : values) {
+              String[] splits = value.split(":");
+              String contents = FileUtils.readFileToString(acceptedFile, StandardCharsets.UTF_8);
+              if (contents.contains(splits[0]) && contents.contains(splits[1])) {
+                tempFeignFileList.add(acceptedFile);
+              }
+            }
+          }
+        }
+      }
+      feignClientConfigDirPath(tempFeignFileList);
+    } else {
+      List<File> interfaceExposeFiles = new ArrayList<>();
+      for (File file : acceptedFiles) {
+        if (file.getName().endsWith("java") && fileContains(file, DUBBO_SERVICE)) {
+          interfaceExposeFiles.add(file);
+        }
+      }
+      targetInterfaceInfo(interfaceExposeFiles);
+      acceptedFiles.removeAll(interfaceExposeFiles);
+      List<File> resourceFile = acceptedFiles.stream()
+          .filter(file -> ((file.getName().endsWith(".yml")) || file.getName().endsWith(".properties")))
+          .collect(Collectors.toList());
+      loadResourceFile(resourceFile);
+      acceptedFiles.removeAll(resourceFile);
+      replaceContent(acceptedFiles);
+      feignClientConfigDirPath(acceptedFiles);
+    }
     writeFeignClientInfoToFile();
+  }
+
+  private void parseXmlGetMicroserviceAndInterfaceInfo(List<File> xmlFiles) {
+    xmlFiles.forEach(file -> {
+      try {
+        SAXReader saxReader = new SAXReader();
+        Element rootElement = saxReader.read(file).getRootElement();
+        String microserviceName = rootElement.element("application").attribute("name").getValue();
+        String baseSubPath = file.getAbsolutePath().substring(0, file.getAbsolutePath().indexOf("resources"));
+        microserviceNameDataMap.putIfAbsent(baseSubPath, microserviceName);
+        Iterator interfaceServices = rootElement.elementIterator("service");
+        while (interfaceServices.hasNext()) {
+          Element next = (Element) interfaceServices.next();
+          String packageName = next.attribute("interface").getValue();
+          interfaceData
+              .add(String.format("%s%s", baseSubPath, packageName.substring(packageName.lastIndexOf(".") + 1)));
+        }
+        Iterator interfaceImplList = rootElement.elementIterator("bean");
+        while (interfaceImplList.hasNext()) {
+          Element next = (Element) interfaceImplList.next();
+          interfaceImplFileList
+              .add(new File(String.format("%s%s%s%s%s", baseSubPath, File.separator, "java", File.separator,
+                  next.attribute("class").getValue().replace(".", File.separator))));
+        }
+        Iterator referenceInterfaceList = rootElement.elementIterator("reference");
+        while (referenceInterfaceList.hasNext()) {
+          Element next = (Element) referenceInterfaceList.next();
+          String packageName = next.attribute("interface").getValue();
+          String interfaceInfo = packageName + ":" + packageName.substring(packageName.lastIndexOf(".") + 1);
+          if (interfaceDataMap.containsKey(baseSubPath)) {
+            interfaceDataMap.get(baseSubPath).add(interfaceInfo);
+          } else {
+            interfaceDataMap.put(baseSubPath, Collections.singleton(interfaceInfo));
+          }
+        }
+      } catch (DocumentException e) {
+        LOGGER.error("Process xml file [{}] failed", file.getAbsolutePath(), e);
+      }
+    });
   }
 
   @Override
   protected boolean isAcceptedFile(File file) throws IOException {
-    if (file.getName().endsWith(".java") || file.getName().endsWith(".yml") || file.getName().endsWith(".properties")) {
+    if (file.getName().endsWith(".java") || file.getName().endsWith(".yml") || file.getName().endsWith(".properties")
+        || (file.getName().endsWith(".xml") && !"pom.xml".equals(file.getName()))) {
       return file.getName().endsWith(".java") ?
-          (fileContains(file, DUBBO_SERVICE) || fileContains(file, DUBBO_REFERENCE)) : fileContains(file, "dubbo");
+          (fileContains(file, DUBBO_SERVICE) || fileContains(file, DUBBO_REFERENCE) || fileContains(file, "@Autowired"))
+          : fileContains(file, "dubbo");
     }
     return false;
   }
@@ -165,6 +243,33 @@ public class ModifyDubboReferenceAction extends FileAction {
         }
         tempStream.write(line);
         tempStream.append(LINE_SEPARATOR);
+      }
+      OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
+      tempStream.writeTo(fileWriter);
+      fileWriter.close();
+    }
+  }
+
+  private void modifyInterfaceImplFileContent() throws IOException {
+    for (File implFile : interfaceImplFileList) {
+      String interfaceImplName = implFile.getAbsolutePath()
+          .substring(implFile.getAbsolutePath().lastIndexOf(File.separator) + 1);
+      String interfaceName = interfaceImplName.substring(0, interfaceImplName.length() - 4);
+      File file = new File(implFile.getAbsolutePath().concat(".java"));
+      CharArrayWriter tempStream = new CharArrayWriter();
+      List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
+      for (String line : lines) {
+        if (line.contains(String.format("%s implements %s", interfaceImplName, interfaceName))) {
+          writeLine(tempStream, "import " + restControllerPackageName + ";");
+          writeLine(tempStream, "import " + requestMappingPackageName + ";");
+          writeLine(tempStream, "");
+          writeLine(tempStream, "@RestController");
+          String router = interfaceName.substring(0, 1).toLowerCase() + interfaceName.substring(1);
+          writeLine(tempStream, String.format("@RequestMapping(\"/%s\")", router));
+          writeLine(tempStream, line);
+          continue;
+        }
+        writeLine(tempStream, line);
       }
       OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
       tempStream.writeTo(fileWriter);
