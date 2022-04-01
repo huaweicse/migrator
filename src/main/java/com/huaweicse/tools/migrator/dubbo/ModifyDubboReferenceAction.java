@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -88,22 +87,6 @@ public class ModifyDubboReferenceAction extends FileAction {
       parseXmlGetMicroserviceAndInterfaceInfo(xmlFiles);
       acceptedFiles.removeAll(xmlFiles);
       modifyInterfaceImplFileContent();
-      List<File> tempFeignFileList = new ArrayList<>();
-      for (File acceptedFile : acceptedFiles) {
-        for (String key : interfaceDataMap.keySet()) {
-          if (acceptedFile.getAbsolutePath().contains(key)) {
-            Set<String> values = interfaceDataMap.get(key);
-            for (String value : values) {
-              String[] splits = value.split(":");
-              String contents = FileUtils.readFileToString(acceptedFile, StandardCharsets.UTF_8);
-              if (contents.contains(splits[0]) && contents.contains(splits[1])) {
-                tempFeignFileList.add(acceptedFile);
-              }
-            }
-          }
-        }
-      }
-      feignClientConfigDirPath(tempFeignFileList);
     } else {
       List<File> interfaceExposeFiles = new ArrayList<>();
       for (File file : acceptedFiles) {
@@ -119,9 +102,30 @@ public class ModifyDubboReferenceAction extends FileAction {
       loadResourceFile(resourceFile);
       acceptedFiles.removeAll(resourceFile);
       replaceContent(acceptedFiles);
-      feignClientConfigDirPath(acceptedFiles);
     }
+    feignClientConfigDirPath(filterFeignFile(acceptedFiles));
     writeFeignClientInfoToFile();
+  }
+
+  private List<File> filterFeignFile(List<File> acceptedFiles) throws IOException {
+    List<File> tempFeignFileList = new ArrayList<>();
+    for (String key : interfaceDataMap.keySet()) {
+      flag:
+      for (File acceptedFile : acceptedFiles) {
+        if (acceptedFile.getAbsolutePath().contains(key)) {
+          Set<String> values = interfaceDataMap.get(key);
+          for (String value : values) {
+            String[] splits = value.split(":");
+            String contents = FileUtils.readFileToString(acceptedFile, StandardCharsets.UTF_8);
+            if (contents.contains(splits[0]) && contents.contains(splits[1])) {
+              tempFeignFileList.add(acceptedFile);
+              break flag;
+            }
+          }
+        }
+      }
+    }
+    return tempFeignFileList;
   }
 
   private void parseXmlGetMicroserviceAndInterfaceInfo(List<File> xmlFiles) {
@@ -154,7 +158,9 @@ public class ModifyDubboReferenceAction extends FileAction {
           if (interfaceDataMap.containsKey(baseSubPath)) {
             interfaceDataMap.get(baseSubPath).add(interfaceInfo);
           } else {
-            interfaceDataMap.put(baseSubPath, Collections.singleton(interfaceInfo));
+            Set<String> dataSet = new HashSet<>();
+            dataSet.add(interfaceInfo);
+            interfaceDataMap.put(baseSubPath, dataSet);
           }
         }
       } catch (DocumentException e) {
@@ -231,10 +237,13 @@ public class ModifyDubboReferenceAction extends FileAction {
           if (targetInterfacePackageName.size() > 1) {
             LOGGER.error(ERROR_MESSAGE, "interface packageName extraction failed", file.getAbsolutePath(), i + 1);
           }
+          String value = targetInterfacePackageName.get(0) + ":" + interfaceName;
           if (interfaceDataMap.containsKey(path)) {
-            interfaceDataMap.get(path).add(targetInterfacePackageName.get(0) + ":" + interfaceName);
+            interfaceDataMap.get(path).add(value);
           } else {
-            interfaceDataMap.put(path, Collections.singleton(targetInterfacePackageName.get(0) + ":" + interfaceName));
+            Set<String> dataSet = new HashSet<>();
+            dataSet.add(value);
+            interfaceDataMap.put(path, dataSet);
           }
           i++;
           tempStream.write(nextLine);
