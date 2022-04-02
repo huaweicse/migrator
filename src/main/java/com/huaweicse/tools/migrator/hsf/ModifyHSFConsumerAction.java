@@ -11,10 +11,10 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
+import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
 
 /**
@@ -27,15 +27,7 @@ public class ModifyHSFConsumerAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFConsumerAction.class);
 
-  private static final String LINE_SEPARATOR = "line.separator";
-
   private static final String HSF_CONSUMER = "@HSFConsumer";
-
-  @Value("${hsf.consumer.packageName:com.alibaba.boot.hsf.annotation.HSFConsumer}")
-  private String hsfConsumerPackageName;
-
-  @Value("${spring.feignClient.packageName:org.springframework.cloud.openfeign.FeignClient}")
-  private String feignClientPackageName;
 
   @Override
   protected boolean isAcceptedFile(File file) throws IOException {
@@ -59,7 +51,7 @@ public class ModifyHSFConsumerAction extends FileAction {
         for (int i = 0; i < lines.size(); i++) {
           String line = lines.get(i);
           // 处理import中的包名
-          line = line.replace(hsfConsumerPackageName, feignClientPackageName);
+          line = line.replace(Const.HSF_CONSUMER_PACKAGE_NAME, Const.FEIGN_CLIENT_PACKAGE_NAME);
           // 处理@HSFConsumer注解信息及接口信息
           if (line.contains(HSF_CONSUMER)) {
             String nextLine = lines.get(i + 1);
@@ -69,32 +61,26 @@ public class ModifyHSFConsumerAction extends FileAction {
                   "Interface definition not valid under @HSFConsumer annotation.",
                   file.getAbsolutePath(), i);
 
-              tempStream.write(line);
-              tempStream.append(System.getProperty(LINE_SEPARATOR));
+              writeLine(tempStream, line);
             } else {
               String interfaceName = interfaceLine[2].replace(";", "");
               String feignClientInfo = feignClientInfo(line, interfaceName);
               if (feignClientInfo != null) {
                 line = line.replace(line.trim(), feignClientInfo);
                 nextLine = nextLine.replace(nextLine.trim(), interfaceExtension(nextLine));
-                tempStream.write(line);
-                tempStream.append(System.getProperty(LINE_SEPARATOR));
-                tempStream.write(nextLine);
-                tempStream.append(System.getProperty(LINE_SEPARATOR));
+                writeLine(tempStream, line);
+                writeLine(tempStream, nextLine);
                 i++;
               } else {
                 LOGGER.error(ERROR_MESSAGE,
                     "Interface declaration missing serviceGroup and interfaceName.",
                     file.getAbsolutePath(), i);
-                tempStream.write(line);
-                tempStream.append(System.getProperty(LINE_SEPARATOR));
+                writeLine(tempStream, line);
               }
             }
             continue;
           }
-          // 处理本文件中其余内容
-          tempStream.write(line);
-          tempStream.append(System.getProperty(LINE_SEPARATOR));
+          writeLine(tempStream, line);
         }
         OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
         tempStream.writeTo(fileWriter);

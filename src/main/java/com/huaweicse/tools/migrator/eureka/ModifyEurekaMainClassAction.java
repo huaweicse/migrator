@@ -11,9 +11,9 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
 
 /**
@@ -25,15 +25,6 @@ import com.huaweicse.tools.migrator.common.FileAction;
 public class ModifyEurekaMainClassAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyEurekaMainClassAction.class);
-
-  @Value("${spring.enableDiscoveryClient.packageName:org.springframework.cloud.client.discovery.EnableDiscoveryClient}")
-  private String enableDiscoveryClientPackageName;
-
-  @Value("${spring.enableEurekaClient.packageName:org.springframework.cloud.netflix.eureka.EnableEurekaClient}")
-  private String enableEurekaClientPackageName;
-
-  @Value("${spring.enableEurekaServer.packageName:org.springframework.cloud.netflix.eureka.server.EnableEurekaServer}")
-  private String enableEurekaServerPackageName;
 
   private static final String ENABLE_EUREKA_SERVER = "@EnableEurekaClient";
 
@@ -60,26 +51,22 @@ public class ModifyEurekaMainClassAction extends FileAction {
         CharArrayWriter tempStream = new CharArrayWriter();
         for (String line : lines) {
           if (line.startsWith("import")) {
-            if (line.contains(enableEurekaClientPackageName)) {
-              line = line.replace(enableEurekaClientPackageName, enableDiscoveryClientPackageName);
-              tempStream.write(line);
-              tempStream.append(LINE_SEPARATOR);
+            if (line.contains(Const.ENABLE_EUREKA_CLIENT_PACKAGE_NAME)) {
+              line = line.replace(Const.ENABLE_EUREKA_CLIENT_PACKAGE_NAME, Const.ENABLE_DISCOVERY_CLIENT_PACKAGE_NAME);
+              writeLine(tempStream, line);
               continue;
             }
-            if (line.contains(enableEurekaServerPackageName)) {
-              line = line.replace(enableEurekaServerPackageName, enableDiscoveryClientPackageName);
-              tempStream.write(line);
-              tempStream.append(LINE_SEPARATOR);
+            if (line.contains(Const.ENABLE_EUREKA_SERVER_PACKAGE_NAME)) {
+              line = line.replace(Const.ENABLE_EUREKA_SERVER_PACKAGE_NAME, Const.ENABLE_DISCOVERY_CLIENT_PACKAGE_NAME);
+              writeLine(tempStream, line);
               continue;
             }
           }
           if (line.trim().startsWith(ENABLE_EUREKA_SERVER) || line.trim().startsWith(ENABLE_EUREKA_CLIENT)) {
-            tempStream.write("@EnableDiscoveryClient");
-            tempStream.append(LINE_SEPARATOR);
+            writeLine(tempStream, "@EnableDiscoveryClient");
             continue;
           }
-          tempStream.write(line);
-          tempStream.append(LINE_SEPARATOR);
+          writeLine(tempStream, line);
         }
         OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
         tempStream.writeTo(fileWriter);

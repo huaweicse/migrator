@@ -11,6 +11,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
+import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
 
 /**
@@ -39,31 +40,26 @@ public class ModifyHSFMainClassAction extends FileAction {
         // import section
         if (line.startsWith("import")) {
           if (!importBegin) {
-            tempStream.append("import org.springframework.cloud.client.discovery.EnableDiscoveryClient;");
-            tempStream.append(LINE_SEPARATOR);
-            tempStream.append("import org.springframework.cloud.openfeign.EnableFeignClients;");
-            tempStream.append(LINE_SEPARATOR);
+            writeLine(tempStream, String.format("%s%s%s", "import ", Const.ENABLE_DISCOVERY_CLIENT_PACKAGE_NAME, ";"));
+            writeLine(tempStream, String.format("%s%s%s", "import ", Const.ENABLE_FEIGN_CLIENTS_PACKAGE_NAME, ";"));
             importBegin = true;
           }
 
-          if (line.contains("com.taobao.pandora.boot.PandoraBootstrap") ||
-              line.contains("org.springframework.cloud.client.discovery.EnableDiscoveryClient") ||
-              line.contains("org.springframework.cloud.openfeign.EnableFeignClients")) {
+          if (line.contains(Const.PANDORA_BOOT_STRAP_PACKAGE_NAME) ||
+              line.contains(Const.ENABLE_DISCOVERY_CLIENT_PACKAGE_NAME) ||
+              line.contains(Const.ENABLE_FEIGN_CLIENTS_PACKAGE_NAME)) {
             continue;
           }
 
-          tempStream.append(line);
-          tempStream.append(LINE_SEPARATOR);
+          writeLine(tempStream, line);
           continue;
         }
 
         // class annotation section
         if (line.startsWith("@")) {
           if (!classAnnotationBegin) {
-            tempStream.append("@EnableDiscoveryClient");
-            tempStream.append(LINE_SEPARATOR);
-            tempStream.append("@EnableFeignClients");
-            tempStream.append(LINE_SEPARATOR);
+            writeLine(tempStream, "@EnableDiscoveryClient");
+            writeLine(tempStream, "@EnableFeignClients");
             classAnnotationBegin = true;
           }
 
@@ -71,8 +67,7 @@ public class ModifyHSFMainClassAction extends FileAction {
             continue;
           }
 
-          tempStream.append(line);
-          tempStream.append(LINE_SEPARATOR);
+          writeLine(tempStream, line);
           continue;
         }
 
@@ -88,8 +83,7 @@ public class ModifyHSFMainClassAction extends FileAction {
         }
 
         // other
-        tempStream.append(line);
-        tempStream.append(LINE_SEPARATOR);
+        writeLine(tempStream, line);
       }
 
       OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
