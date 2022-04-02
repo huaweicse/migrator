@@ -13,9 +13,9 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
 
 /**
@@ -27,17 +27,6 @@ import com.huaweicse.tools.migrator.common.FileAction;
 public class ModifyDubboServiceAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyDubboServiceAction.class);
-
-  @Value("${dubbo.provider.packageName:org.apache.dubbo.config.annotation.DubboService}")
-  private String dubboProviderPackageName;
-
-  @Value("${spring.requestMapping.packageName:org.springframework.web.bind.annotation.RequestMapping}")
-  private String requestMappingPackageName;
-
-  @Value("${spring.restController.packageName:org.springframework.web.bind.annotation.RestController}")
-  private String restControllerPackageName;
-
-  private static final String LINE_SEPARATOR = "line.separator";
 
   private static final String INTERFACE_REGEX_PATTERN = "implements [a-zA-Z][a-zA-Z0-9]*";
 
@@ -64,12 +53,10 @@ public class ModifyDubboServiceAction extends FileAction {
       for (int i = 0; i < lines.size(); i++) {
         String line = lines.get(i);
 
-        if (line.contains(dubboProviderPackageName)) {
-          line = line.replace(dubboProviderPackageName, requestMappingPackageName);
-          tempStream.write(line);
-          tempStream.append(System.getProperty(LINE_SEPARATOR));
-          tempStream.write("import " + restControllerPackageName + ";");
-          tempStream.append(System.getProperty(LINE_SEPARATOR));
+        if (line.contains(Const.DUBBO_PROVIDER_PACKAGE_NAME)) {
+          line = line.replace(Const.DUBBO_PROVIDER_PACKAGE_NAME, Const.REQUEST_MAPPING_PACKAGE_NAME);
+          writeLine(tempStream, line);
+          writeLine(tempStream, "import " + Const.REST_CONTROLLER_PACKAGE_NAME + ";");
           continue;
         }
         if (line.trim().startsWith(DUBBO_SERVICE)) {
@@ -86,17 +73,13 @@ public class ModifyDubboServiceAction extends FileAction {
                 i);
             continue;
           }
-
-          tempStream.write("@RestController");
-          tempStream.append(System.getProperty(LINE_SEPARATOR));
-          tempStream.write(
+          writeLine(tempStream, "@RestController");
+          writeLine(tempStream,
               "@RequestMapping(\"/" + interfaceName.substring(0, 1).toLowerCase() + interfaceName.substring(1)
                   + "\")");
-          tempStream.append(System.getProperty(LINE_SEPARATOR));
           continue;
         }
-        tempStream.write(line);
-        tempStream.append(System.getProperty(LINE_SEPARATOR));
+        writeLine(tempStream, line);
       }
       OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
       tempStream.writeTo(fileWriter);

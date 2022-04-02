@@ -31,17 +31,11 @@ public abstract class ModifyPomAction implements Action {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyPomAction.class);
 
-  public static final String FILE_SEPARATOR = File.separator;
-
   public static final String BASE_PATH = System.getProperty("user.dir");
 
   private List<File> pomFileList = new ArrayList<>();
 
-  public String frameType;
-
-  public String getFrameType() {
-    return frameType;
-  }
+  public abstract String getFrameType();
 
   @Override
   public void run(String... args) {

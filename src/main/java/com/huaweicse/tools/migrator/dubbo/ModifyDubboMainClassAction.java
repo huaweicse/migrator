@@ -11,9 +11,9 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
 
 /**
@@ -25,21 +25,6 @@ import com.huaweicse.tools.migrator.common.FileAction;
 public class ModifyDubboMainClassAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyDubboMainClassAction.class);
-
-  @Value("${dubbo.enableDubbo.packageName:org.apache.dubbo.config.spring.context.annotation.EnableDubbo}")
-  private String enableDubboPackageName;
-
-  @Value("${spring.propertySource.packageName:org.springframework.context.annotation.PropertySource}")
-  private String propertySourcePackageName;
-
-  @Value("${spring.enableDiscoveryClient.packageName:org.springframework.cloud.client.discovery.EnableDiscoveryClient}")
-  private String enableDiscoveryClient;
-
-  @Value("${spring.enableFeignClients.packageName:org.springframework.cloud.openfeign.EnableFeignClients}")
-  private String enableFeignClientsPackageName;
-
-  @Value("${spring.importResource.packageName:org.springframework.context.annotation.ImportResource}")
-  private String importResourcePackageName;
 
   private static final String ENABLE_DUBBO = "@EnableDubbo";
 
@@ -65,31 +50,26 @@ public class ModifyDubboMainClassAction extends FileAction {
         List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
         CharArrayWriter tempStream = new CharArrayWriter();
         for (String line : lines) {
-          if (line.contains(propertySourcePackageName)) {
+          if (line.contains(Const.PROPERTY_SOURCE_PACKAGE_NAME)) {
             continue;
           }
-          if (line.startsWith("import") && (line.contains(enableDubboPackageName) || line
-              .contains(importResourcePackageName))) {
-            line = line.replace(enableDubboPackageName, enableDiscoveryClient);
-            line = line.replace(importResourcePackageName, enableDiscoveryClient);
-            tempStream.write(line);
-            tempStream.append(LINE_SEPARATOR);
-            tempStream.write("import " + enableFeignClientsPackageName + ";");
-            tempStream.append(LINE_SEPARATOR);
+          if (line.startsWith("import") && (line.contains(Const.ENABLE_DUBBO_PACKAGE_NAME) || line
+              .contains(Const.IMPORT_RESOURCE_PACKAGE_NAME))) {
+            line = line.replace(Const.ENABLE_DUBBO_PACKAGE_NAME, Const.ENABLE_DISCOVERY_CLIENT_PACKAGE_NAME);
+            line = line.replace(Const.IMPORT_RESOURCE_PACKAGE_NAME, Const.ENABLE_DISCOVERY_CLIENT_PACKAGE_NAME);
+            writeLine(tempStream, line);
+            writeLine(tempStream, "import " + Const.ENABLE_FEIGN_CLIENTS_PACKAGE_NAME + ";");
             continue;
           }
           if (line.trim().startsWith("@PropertySource")) {
             continue;
           }
           if (line.trim().startsWith(ENABLE_DUBBO) || line.trim().startsWith(IMPORT_RESOURCE)) {
-            tempStream.write("@EnableDiscoveryClient");
-            tempStream.append(LINE_SEPARATOR);
-            tempStream.write("@EnableFeignClients");
-            tempStream.append(LINE_SEPARATOR);
+            writeLine(tempStream, "@EnableDiscoveryClient");
+            writeLine(tempStream, "@EnableFeignClients");
             continue;
           }
-          tempStream.write(line);
-          tempStream.append(LINE_SEPARATOR);
+          writeLine(tempStream, line);
         }
         OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
         tempStream.writeTo(fileWriter);

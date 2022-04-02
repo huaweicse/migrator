@@ -27,11 +27,11 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.yaml.snakeyaml.Yaml;
 
+import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
 
 /**
@@ -43,24 +43,6 @@ import com.huaweicse.tools.migrator.common.FileAction;
 public class ModifyDubboReferenceAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyDubboReferenceAction.class);
-
-  @Value("${dubbo.dubboReference.packageName:org.apache.dubbo.config.annotation.DubboReference}")
-  private String dubboReferencePackageName;
-
-  @Value("${spring.autowired.packageName:org.springframework.beans.factory.annotation.Autowired}")
-  private String autowiredPackageName;
-
-  @Value("${spring.feignClient.packageName:org.springframework.cloud.openfeign.FeignClient}")
-  private String feignClientPackageName;
-
-  @Value("${spring.configuration.packageName:org.springframework.context.annotation.Configuration}")
-  private String configurationPackageName;
-
-  @Value("${spring.requestMapping.packageName:org.springframework.web.bind.annotation.RequestMapping}")
-  private String requestMappingPackageName;
-
-  @Value("${spring.restController.packageName:org.springframework.web.bind.annotation.RestController}")
-  private String restControllerPackageName;
 
   private static final String INTERFACE_REGEX_PATTERN = "implements [a-zA-Z][a-zA-Z0-9]*";
 
@@ -147,8 +129,8 @@ public class ModifyDubboReferenceAction extends FileAction {
         while (interfaceImplList.hasNext()) {
           Element next = (Element) interfaceImplList.next();
           interfaceImplFileList
-              .add(new File(String.format("%s%s%s%s%s", baseSubPath, File.separator, "java", File.separator,
-                  next.attribute("class").getValue().replace(".", File.separator))));
+              .add(new File(String.format("%s%s%s%s%s", baseSubPath, FILE_SEPARATOR, "java", FILE_SEPARATOR,
+                  next.attribute("class").getValue().replace(".", FILE_SEPARATOR))));
         }
         Iterator referenceInterfaceList = rootElement.elementIterator("reference");
         while (referenceInterfaceList.hasNext()) {
@@ -214,22 +196,19 @@ public class ModifyDubboReferenceAction extends FileAction {
       for (int i = 0; i < lines.size(); i++) {
         String line = lines.get(i);
         if (line.startsWith("import")) {
-          if (line.contains(dubboReferencePackageName)) {
-            line = line.replace(dubboReferencePackageName, autowiredPackageName);
-            tempStream.write(line);
-            tempStream.append(LINE_SEPARATOR);
+          if (line.contains(Const.DUBBO_REFERENCE_PACKAGE_NAME)) {
+            line = line.replace(Const.DUBBO_REFERENCE_PACKAGE_NAME, Const.AUTOWIRED_PACKAGE_NAME);
+            writeLine(tempStream, line);
             continue;
           }
-          tempStream.write(line);
-          tempStream.append(LINE_SEPARATOR);
+          writeLine(tempStream, line);
           String importPackageName = line.trim().split(" ")[1].replace(";", "");
           importPackageDataList.add(importPackageName);
           continue;
         }
         if (line.trim().startsWith(DUBBO_REFERENCE)) {
           line = line.replace(DUBBO_REFERENCE, "@Autowired");
-          tempStream.write(line);
-          tempStream.append(LINE_SEPARATOR);
+          writeLine(tempStream, line);
           String nextLine = lines.get(i + 1);
           String interfaceName = nextLine.trim().split(" ")[1];
           List<String> targetInterfacePackageName = importPackageDataList.stream()
@@ -246,12 +225,10 @@ public class ModifyDubboReferenceAction extends FileAction {
             interfaceDataMap.put(path, dataSet);
           }
           i++;
-          tempStream.write(nextLine);
-          tempStream.append(LINE_SEPARATOR);
+          writeLine(tempStream, nextLine);
           continue;
         }
-        tempStream.write(line);
-        tempStream.append(LINE_SEPARATOR);
+        writeLine(tempStream, line);
       }
       OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
       tempStream.writeTo(fileWriter);
@@ -262,15 +239,15 @@ public class ModifyDubboReferenceAction extends FileAction {
   private void modifyInterfaceImplFileContent() throws IOException {
     for (File implFile : interfaceImplFileList) {
       String interfaceImplName = implFile.getAbsolutePath()
-          .substring(implFile.getAbsolutePath().lastIndexOf(File.separator) + 1);
+          .substring(implFile.getAbsolutePath().lastIndexOf(FILE_SEPARATOR) + 1);
       String interfaceName = interfaceImplName.substring(0, interfaceImplName.length() - 4);
       File file = new File(implFile.getAbsolutePath().concat(".java"));
       CharArrayWriter tempStream = new CharArrayWriter();
       List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
       for (String line : lines) {
         if (line.contains(String.format("%s implements %s", interfaceImplName, interfaceName))) {
-          writeLine(tempStream, "import " + restControllerPackageName + ";");
-          writeLine(tempStream, "import " + requestMappingPackageName + ";");
+          writeLine(tempStream, "import " + Const.REST_CONTROLLER_PACKAGE_NAME + ";");
+          writeLine(tempStream, "import " + Const.REQUEST_MAPPING_PACKAGE_NAME + ";");
           writeLine(tempStream, "");
           writeLine(tempStream, "@RestController");
           String router = interfaceName.substring(0, 1).toLowerCase() + interfaceName.substring(1);
@@ -290,7 +267,7 @@ public class ModifyDubboReferenceAction extends FileAction {
     feignFileDirs.forEach(feignDir -> {
       try {
         String packageName = feignDir.getAbsolutePath().substring(feignDir.getAbsolutePath().indexOf("java") + 5)
-            .replace(File.separator, ".");
+            .replace(FILE_SEPARATOR, ".");
         Set<String> interfaceSets = interfaceDataMap
             .get(feignDir.getAbsolutePath().substring(0, feignDir.getAbsolutePath().indexOf("java")));
         CharArrayWriter tempStream = new CharArrayWriter();
@@ -300,8 +277,8 @@ public class ModifyDubboReferenceAction extends FileAction {
           writeLine(tempStream, String.format("import %s%s", interfaceInfo.split(":")[0], ";"));
         }
         writeLine(tempStream, "");
-        writeLine(tempStream, String.format("import %s%s", feignClientPackageName, ";"));
-        writeLine(tempStream, String.format("import %s%s", configurationPackageName, ";"));
+        writeLine(tempStream, String.format("import %s%s", Const.FEIGN_CLIENT_PACKAGE_NAME, ";"));
+        writeLine(tempStream, String.format("import %s%s", Const.CONFIGURATION_PACKAGE_NAME, ";"));
         writeLine(tempStream, "");
         writeLine(tempStream, "@Configuration");
         writeLine(tempStream, "public class DubboInterfaceConfig {");
@@ -313,9 +290,9 @@ public class ModifyDubboReferenceAction extends FileAction {
           }
           for (String data : interfaceData) {
             String interfaceName = interfaceInfo.split(":")[1];
-            if (data.substring(data.lastIndexOf(File.separator) + 1).equals(interfaceName)) {
+            if (data.substring(data.lastIndexOf(FILE_SEPARATOR) + 1).equals(interfaceName)) {
               String microserviceName = microserviceNameDataMap
-                  .get(data.substring(0, data.lastIndexOf(File.separator) + 1));
+                  .get(data.substring(0, data.lastIndexOf(FILE_SEPARATOR) + 1));
               writeLine(tempStream, feignClientInfo(microserviceName,
                   interfaceName.substring(0, 1).toLowerCase() + interfaceName.substring(1)));
               writeLine(tempStream, interfaceExtension(interfaceName));
@@ -326,7 +303,7 @@ public class ModifyDubboReferenceAction extends FileAction {
           interfaceData.remove(tempInterfaceInfo);
         }
         writeLine(tempStream, "}");
-        File targetFile = new File(feignDir.getAbsolutePath() + File.separator + "DubboInterfaceConfig.java");
+        File targetFile = new File(feignDir.getAbsolutePath() + FILE_SEPARATOR + "DubboInterfaceConfig.java");
         OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(targetFile),
             StandardCharsets.UTF_8);
         tempStream.writeTo(fileWriter);
@@ -361,15 +338,10 @@ public class ModifyDubboReferenceAction extends FileAction {
     return new String(stringBuilder);
   }
 
-  private void writeLine(CharArrayWriter tempStream, String context) throws IOException {
-    tempStream.write(context);
-    tempStream.append(LINE_SEPARATOR);
-  }
-
   private void feignClientConfigDirPath(List<File> acceptedFiles) {
     acceptedFiles.forEach(file -> {
-      String tempPath = file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(File.separator));
-      String targetFileDir = tempPath.substring(0, tempPath.lastIndexOf(File.separator) + 1) + "config";
+      String tempPath = file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(FILE_SEPARATOR));
+      String targetFileDir = tempPath.substring(0, tempPath.lastIndexOf(FILE_SEPARATOR) + 1) + "config";
       File targetFile = new File(targetFileDir);
       if (!targetFile.exists()) {
         if (targetFile.mkdirs()) {

@@ -16,9 +16,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
 import com.huaweicse.tools.migrator.common.ParamValueType;
 
@@ -36,21 +36,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
   private static final String ROUTER_REGEX_PATTERN = "[/*{}]";
 
-  private static final String LINE_SEPARATOR = "line.separator";
-
   private static final String HSF_PROVIDER = "@HSFProvider";
-
-  @Value("${spring.responseBody.packageName:org.springframework.web.bind.annotation.ResponseBody}")
-  private String responseBodyPackageName;
-
-  @Value("${spring.postMapping.packageName:org.springframework.web.bind.annotation.PostMapping}")
-  private String postMappingPackageName;
-
-  @Value("${spring.requestParam.packageName:org.springframework.web.bind.annotation.RequestParam}")
-  private String requestParamPackageName;
-
-  @Value("${spring.requestBody.packageName:org.springframework.web.bind.annotation.RequestBody}")
-  private String requestBodyPackageName;
 
   @Override
   public void run(String... args) throws Exception {
@@ -60,7 +46,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   }
 
   @Override
-  protected boolean isAcceptedFile(File file) throws IOException {
+  protected boolean isAcceptedFile(File file) {
     return file.getName().endsWith(".java");
   }
 
@@ -97,10 +83,10 @@ public class ModifyHSFInterface2RestAction extends FileAction {
               if (line.contains("package")) {
                 writeLine(tempStream, line);
                 writeLine(tempStream, "");
-                writeLine(tempStream, "import " + responseBodyPackageName + ";");
-                writeLine(tempStream, "import " + postMappingPackageName + ";");
-                writeLine(tempStream, "import " + requestParamPackageName + ";");
-                writeLine(tempStream, "import " + requestBodyPackageName + ";");
+                writeLine(tempStream, "import " + Const.RESPONSE_BODY_PACKAGE_NAME + ";");
+                writeLine(tempStream, "import " + Const.POST_MAPPING_PACKAGE_NAME + ";");
+                writeLine(tempStream, "import " + Const.REQUEST_PARAM_PACKAGE_NAME + ";");
+                writeLine(tempStream, "import " + Const.REQUEST_BODY_PACKAGE_NAME + ";");
                 continue;
               }
               if (!("".equals(line) || isEffectiveInterface(line))) {
@@ -217,11 +203,6 @@ public class ModifyHSFInterface2RestAction extends FileAction {
     Pattern pattern = Pattern.compile(ROUTER_REGEX_PATTERN);
     Matcher matcher = pattern.matcher(line);
     return matcher.find();
-  }
-
-  private void writeLine(CharArrayWriter tempStream, String line) throws IOException {
-    tempStream.write(line);
-    tempStream.append(System.getProperty(LINE_SEPARATOR));
   }
 }
 

@@ -20,10 +20,10 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
+import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
 import com.huaweicse.tools.migrator.common.ParamValueType;
 
@@ -36,18 +36,6 @@ import com.huaweicse.tools.migrator.common.ParamValueType;
 public class ModifyDubboInterface2RestAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyDubboInterface2RestAction.class);
-
-  @Value("${spring.responseBody.packageName:org.springframework.web.bind.annotation.ResponseBody}")
-  private String responseBodyPackageName;
-
-  @Value("${spring.postMapping.packageName:org.springframework.web.bind.annotation.PostMapping}")
-  private String postMappingPackageName;
-
-  @Value("${spring.requestParam.packageName:org.springframework.web.bind.annotation.RequestParam}")
-  private String requestParamPackageName;
-
-  @Value("${spring.requestBody.packageName:org.springframework.web.bind.annotation.RequestBody}")
-  private String requestBodyPackageName;
 
   private static final String INTERFACE_REGEX_PATTERN = "implements [a-zA-Z][a-zA-Z0-9]*";
 
@@ -144,10 +132,10 @@ public class ModifyDubboInterface2RestAction extends FileAction {
               if (line.contains("package")) {
                 writeLine(tempStream, line);
                 writeLine(tempStream, "");
-                writeLine(tempStream, "import " + responseBodyPackageName + ";");
-                writeLine(tempStream, "import " + postMappingPackageName + ";");
-                writeLine(tempStream, "import " + requestParamPackageName + ";");
-                writeLine(tempStream, "import " + requestBodyPackageName + ";");
+                writeLine(tempStream, "import " + Const.RESPONSE_BODY_PACKAGE_NAME + ";");
+                writeLine(tempStream, "import " + Const.POST_MAPPING_PACKAGE_NAME + ";");
+                writeLine(tempStream, "import " + Const.REQUEST_PARAM_PACKAGE_NAME + ";");
+                writeLine(tempStream, "import " + Const.REQUEST_BODY_PACKAGE_NAME + ";");
                 continue;
               }
               if (!("".equals(line) || isEffectiveInterface(line))) {
@@ -266,10 +254,5 @@ public class ModifyDubboInterface2RestAction extends FileAction {
     Pattern pattern = Pattern.compile(ROUTER_REGEX_PATTERN);
     Matcher matcher = pattern.matcher(line);
     return matcher.find();
-  }
-
-  private void writeLine(CharArrayWriter tempStream, String line) throws IOException {
-    tempStream.write(line);
-    tempStream.append(LINE_SEPARATOR);
   }
 }

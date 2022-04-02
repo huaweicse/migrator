@@ -17,8 +17,6 @@ public abstract class AddBootstrapYamlAction implements Action {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AddBootstrapYamlAction.class);
 
-  public static final String FILE_SEPARATOR = File.separator;
-
   public static final String BASE_PATH = System.getProperty("user.dir");
 
   @Override
