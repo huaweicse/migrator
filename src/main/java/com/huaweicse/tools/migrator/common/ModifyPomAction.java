@@ -1,6 +1,5 @@
 package com.huaweicse.tools.migrator.common;
 
-import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -13,7 +12,6 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Stream;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
@@ -87,17 +85,6 @@ public abstract class ModifyPomAction implements Action {
             StandardCharsets.UTF_8);
         new MavenXpp3Writer().write(outputStreamWriter, model);
         IOUtils.close(outputStreamWriter);
-
-        // 重新写一遍，修改换行
-        List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
-        CharArrayWriter tempStream = new CharArrayWriter();
-        for (String line : lines) {
-          tempStream.write(line);
-          tempStream.write(LINE_SEPARATOR);
-        }
-        OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
-        tempStream.writeTo(fileWriter);
-        fileWriter.close();
       } catch (Exception ex) {
         LOGGER.error("Process pom.xml [{}] failed", file.getAbsolutePath(), ex);
       }
