@@ -210,7 +210,8 @@ public class ModifyDubboReferenceAction extends FileAction {
           line = line.replace(DUBBO_REFERENCE, "@Autowired");
           writeLine(tempStream, line);
           String nextLine = lines.get(i + 1);
-          String interfaceName = nextLine.trim().split(" ")[1];
+          String[] s = nextLine.trim().split(" ");
+          String interfaceName = Character.isUpperCase(s[0].charAt(0)) ? s[0] : s[1];
           List<String> targetInterfacePackageName = importPackageDataList.stream()
               .filter(packageName -> packageName.contains(interfaceName)).collect(Collectors.toList());
           if (targetInterfacePackageName.size() > 1) {
