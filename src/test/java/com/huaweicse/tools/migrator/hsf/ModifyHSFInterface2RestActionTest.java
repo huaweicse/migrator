@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import com.huaweicse.tools.migrator.Utils;
-import com.huaweicse.tools.migrator.hsf.ModifyHSFInterface2RestAction;
 
 @SpringBootTest
 public class ModifyHSFInterface2RestActionTest {
@@ -36,7 +35,7 @@ public class ModifyHSFInterface2RestActionTest {
 
   @AfterEach
   public void tearDown() throws Exception {
-    FileUtils.deleteDirectory(new File(TEMP_DIR_PATH));
+
   }
 
 

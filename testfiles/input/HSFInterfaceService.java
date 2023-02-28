@@ -24,6 +24,10 @@ public interface HSFInterfaceService {
 
   ResultBody single(EntityBody entityBody, Long count, Double num);
 
+  ResultBody generics(Map<String, Object> entityBody, Long count, Double num);
+
+  List<Map<String, Object>> queryWithoutOrm(String token, String sql, Object... args);
+
   // 该情况下打印error日志，稍后手动进行参数重构
   ResultBody manyBody(BodyOne bodyOne, BodyTwo bodyTwo, Long count, Double num);
 }

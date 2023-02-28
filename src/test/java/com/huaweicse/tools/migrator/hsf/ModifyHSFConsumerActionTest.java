@@ -42,7 +42,7 @@ public class ModifyHSFConsumerActionTest {
 
   @AfterEach
   public void tearDown() throws Exception  {
-    FileUtils.deleteDirectory(new File(TEMP_DIR_PATH));
+//    FileUtils.deleteDirectory(new File(TEMP_DIR_PATH));
   }
 
   // 规范开发风格文件测试
@@ -67,6 +67,18 @@ public class ModifyHSFConsumerActionTest {
     modifyHSFConsumerAction.run(TEMP_DIR_PATH + fileSeparator + "input");
 
     String fileName = "HSFConsumerNonstandardConfig.java";
+    Utils.assertFileContentEquals(genFilePath(TEMP_DIR_PATH, "input", fileName),
+        genFilePath(localFileBasePath, "output", fileName));
+  }
+
+  @Test
+  public void testModifyAntaConfig() throws Exception {
+    localFileBasePath = BASE_PATH + fileSeparator + "testfiles";
+    FileUtils.copyDirectoryToDirectory(new File(localFileBasePath + fileSeparator + "input"),
+        new File(TEMP_DIR_PATH));
+    modifyHSFConsumerAction.run(TEMP_DIR_PATH + fileSeparator + "input");
+
+    String fileName = "GoodsServiceHsfConfig.java";
     Utils.assertFileContentEquals(genFilePath(TEMP_DIR_PATH, "input", fileName),
         genFilePath(localFileBasePath, "output", fileName));
   }

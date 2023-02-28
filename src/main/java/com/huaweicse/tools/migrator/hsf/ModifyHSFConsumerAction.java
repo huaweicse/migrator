@@ -7,13 +7,15 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.alibaba.fastjson.JSONObject;
 import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
 
@@ -28,6 +30,8 @@ public class ModifyHSFConsumerAction extends FileAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFConsumerAction.class);
 
   private static final String HSF_CONSUMER = "@HSFConsumer";
+
+  private static final Pattern HSF_SERVICE_GROUP = Pattern.compile("serviceGroup = \"[a-zA-Z-_]+\"");
 
   @Override
   protected boolean isAcceptedFile(File file) throws IOException {
@@ -48,10 +52,50 @@ public class ModifyHSFConsumerAction extends FileAction {
       try {
         List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
         CharArrayWriter tempStream = new CharArrayWriter();
+        String className = "";
+        boolean notesBegin = false;
+
         for (int i = 0; i < lines.size(); i++) {
           String line = lines.get(i);
-          // 处理import中的包名
-          line = line.replace(Const.HSF_CONSUMER_PACKAGE_NAME, Const.FEIGN_CLIENT_PACKAGE_NAME);
+
+          // 空行
+          if (line.trim().isEmpty()) {
+            writeLine(tempStream, line);
+            continue;
+          }
+          // 行注释
+          if (line.trim().startsWith("//")) {
+            writeLine(tempStream, line);
+            continue;
+          }
+          // 文本注释
+          if (line.trim().startsWith("*/")) {
+            notesBegin = false;
+            writeLine(tempStream, line);
+            continue;
+          }
+          if (notesBegin) {
+            writeLine(tempStream, line);
+            continue;
+          }
+          if (line.trim().startsWith("/**")) {
+            notesBegin = true;
+            writeLine(tempStream, line);
+            continue;
+          }
+
+          if (line.contains("import")) {
+            line = line.replace(Const.HSF_CONSUMER_PACKAGE_NAME, Const.FEIGN_CLIENT_PACKAGE_NAME);
+            writeLine(tempStream, line);
+            continue;
+          }
+
+          if (line.contains(" class ")) {
+            className = line.substring(line.indexOf(" class ") + 7, line.indexOf("{")).trim();
+            writeLine(tempStream, line);
+            continue;
+          }
+
           // 处理@HSFConsumer注解信息及接口信息
           if (line.contains(HSF_CONSUMER)) {
             String nextLine = lines.get(i + 1);
@@ -60,11 +104,10 @@ public class ModifyHSFConsumerAction extends FileAction {
               LOGGER.error(ERROR_MESSAGE,
                   "Interface definition not valid under @HSFConsumer annotation.",
                   file.getAbsolutePath(), i);
-
               writeLine(tempStream, line);
             } else {
-              String interfaceName = interfaceLine[2].replace(";", "");
-              String feignClientInfo = feignClientInfo(line, interfaceName);
+              String interfaceName = interfaceLine[1];
+              String feignClientInfo = feignClientInfo(line, interfaceName, className);
               if (feignClientInfo != null) {
                 line = line.replace(line.trim(), feignClientInfo);
                 nextLine = nextLine.replace(nextLine.trim(), interfaceExtension(nextLine));
@@ -92,24 +135,26 @@ public class ModifyHSFConsumerAction extends FileAction {
   }
 
   // FeignClient属性信息
-  private String feignClientInfo(String line, String commonStr) {
-    StringBuilder stringBuilder = new StringBuilder();
-    // 将目标字符串转化为JsonObject获取被调的微服务名称及进行属性信息拼接
-    line = line.replace('=', ':');
-    String jsonString = "{" + line.substring(line.indexOf("(") + 1, line.lastIndexOf(")")) + "}";
-    Object serviceGroupValue = JSONObject.parseObject(jsonString).get("serviceGroup");
-    // 当开发者没有配置serviceGroup时，不抛出异常，保证后续内容正常修改，待内容修改全部完成后在error日志文件中查询相关不规范地方进行手动修改
-    if (serviceGroupValue == null) {
-      return null;
+  private String feignClientInfo(String definitionLine, String interfaceName, String className) {
+    interfaceName = interfaceName.toLowerCase(Locale.ROOT).substring(0, 1) + interfaceName.substring(1);
+    Matcher matcher = HSF_SERVICE_GROUP.matcher(definitionLine);
+    String serviceName = null;
+    if (matcher.find()) {
+      serviceName = matcher.group();
+      serviceName = serviceName.substring(serviceName.indexOf("\"") + 1, serviceName.lastIndexOf("\""));
     }
+    if (serviceName == null) {
+      serviceName = "${feign.client." + className + "}";
+    }
+    StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append("@FeignClient(name = \"")
-        .append(serviceGroupValue)
+        .append(serviceName)
         .append("\"")
         .append(", contextId = \"")
-        .append(commonStr)
+        .append(interfaceName.toLowerCase(Locale.ROOT).substring(0, 1) + interfaceName.substring(1))
         .append("\", ")
         .append("path = \"/")
-        .append(commonStr)
+        .append(interfaceName)
         .append("\")");
     return new String(stringBuilder);
   }

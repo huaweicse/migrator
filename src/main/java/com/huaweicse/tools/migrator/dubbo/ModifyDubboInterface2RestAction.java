@@ -135,6 +135,7 @@ public class ModifyDubboInterface2RestAction extends FileAction {
                 writeLine(tempStream, "import " + Const.RESPONSE_BODY_PACKAGE_NAME + ";");
                 writeLine(tempStream, "import " + Const.POST_MAPPING_PACKAGE_NAME + ";");
                 writeLine(tempStream, "import " + Const.REQUEST_PARAM_PACKAGE_NAME + ";");
+                writeLine(tempStream, "import " + Const.REQUEST_HEADER_PACKAGE_NAME + ";");
                 writeLine(tempStream, "import " + Const.REQUEST_BODY_PACKAGE_NAME + ";");
                 continue;
               }

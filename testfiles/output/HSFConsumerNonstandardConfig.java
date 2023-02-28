@@ -10,8 +10,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class HSFConsumerNonstandardConfig {
 
-  @HSFConsumer(clientTimeout = 3000, serviceVersion = "1.0.0")
-  private MissGroupService missGroupService;
+  @FeignClient(name = "${feign.client.HSFConsumerNonstandardConfig}", contextId = "missGroupService", path = "/missGroupService")
+  public interface MissGroupServiceExt extends MissGroupService{}
 
   @FeignClient(name = "nomal", contextId = "nomalService", path = "/nomalService")
   public interface NomalServiceExt extends NomalService{}

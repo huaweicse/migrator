@@ -7,11 +7,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -20,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
-import com.huaweicse.tools.migrator.common.ParamValueType;
+import com.huaweicse.tools.migrator.common.Parameter;
 
 /**
  * 功能描述：
@@ -34,9 +32,14 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
   private static final String INTERFACE_REGEX_PATTERN = "[a-zA-Z]+(.class)";
 
-  private static final String ROUTER_REGEX_PATTERN = "[/*{}]";
-
   private static final String HSF_PROVIDER = "@HSFProvider";
+
+  private static final Pattern PATTERN_METHOD = Pattern.compile(
+      "[ a-zA-Z0-9<>\\[\\],]+\\([ a-zA-Z0-9<>\\[\\],\\.]*\\);[ ]*");
+
+  private static final Pattern PATTERN_METHOD_NAME = Pattern.compile(" [a-zA-Z0-9]+\\(");
+
+  private static final Pattern PATTERN_METHOD_PARAMETERS = Pattern.compile("\\([ a-zA-Z0-9<>\\[\\],\\.]*\\)");
 
   @Override
   public void run(String... args) throws Exception {
@@ -68,141 +71,182 @@ public class ModifyHSFInterface2RestAction extends FileAction {
     return interfaceFileList;
   }
 
-  private void replaceContent(List<File> acceptedFiles, List<String> interfaceFileList) {
-    acceptedFiles.forEach(file -> {
-      try {
-        if (interfaceFileList.size() == 0) {
-          return;
-        }
-        CharArrayWriter tempStream = new CharArrayWriter();
-        String tempInterfaceFileName = null;
-        for (String interfaceFileName : interfaceFileList) {
-          if (interfaceFileName.equals(file.getName())) {
-            List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
-            for (String line : lines) {
-              if (line.contains("package")) {
-                writeLine(tempStream, line);
-                writeLine(tempStream, "");
-                writeLine(tempStream, "import " + Const.RESPONSE_BODY_PACKAGE_NAME + ";");
-                writeLine(tempStream, "import " + Const.POST_MAPPING_PACKAGE_NAME + ";");
-                writeLine(tempStream, "import " + Const.REQUEST_PARAM_PACKAGE_NAME + ";");
-                writeLine(tempStream, "import " + Const.REQUEST_BODY_PACKAGE_NAME + ";");
-                continue;
-              }
-              if (!("".equals(line) || isEffectiveInterface(line))) {
-                String[] strings = line.trim().replace("(", " ").split(" ");
-                writeLine(tempStream, "  @ResponseBody");
-                ArrayList<String> paramList = paramHandling(line, file);
-                if (paramList == null) {
-                  writeLine(tempStream, postMappingString(strings[0], strings[1], "0"));
-                  writeLine(tempStream, line);
-                } else {
-                  writeLine(tempStream, postMappingString(strings[0], strings[1], paramList.get(paramList.size() - 1)));
-                  writeLine(tempStream, interfaceInfo(line, paramList));
-                }
-                continue;
-              }
-              writeLine(tempStream, line);
-            }
-            tempInterfaceFileName = interfaceFileName;
-            OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
-            tempStream.writeTo(fileWriter);
-            fileWriter.close();
-          }
-        }
-        interfaceFileList.remove(tempInterfaceFileName);
-      } catch (IOException e) {
-        LOGGER.error("error modifying content and filePath is {}", file.getAbsolutePath());
+  private void replaceContent(List<File> acceptedFiles, List<String> interfaceFileList) throws Exception {
+    String fileName;
+
+    for (File file : acceptedFiles) {
+      fileName = file.getAbsolutePath();
+
+      if (!interfaceFileList.contains(file.getName())) {
+        continue;
       }
-    });
+
+      List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
+      if (!isInterfaceFile(lines)) {
+        continue;
+      }
+
+      CharArrayWriter tempStream = new CharArrayWriter();
+      boolean notesBegin = false;
+      int lineNumber = 0;
+      for (String line : lines) {
+        lineNumber++;
+        // 空行
+        if (line.trim().isEmpty()) {
+          writeLine(tempStream, line);
+          continue;
+        }
+        // 行注释
+        if (line.trim().startsWith("//")) {
+          writeLine(tempStream, line);
+          continue;
+        }
+        // 文本注释
+        if (line.trim().startsWith("*/")) {
+          notesBegin = false;
+          writeLine(tempStream, line);
+          continue;
+        }
+        if (notesBegin) {
+          writeLine(tempStream, line);
+          continue;
+        }
+        if (line.trim().startsWith("/**")) {
+          notesBegin = true;
+          writeLine(tempStream, line);
+          continue;
+        }
+
+        if (line.startsWith("package ")) {
+          writeLine(tempStream, line);
+          writeLine(tempStream, "");
+          writeLine(tempStream, "import " + Const.RESPONSE_BODY_PACKAGE_NAME + ";");
+          writeLine(tempStream, "import " + Const.POST_MAPPING_PACKAGE_NAME + ";");
+          writeLine(tempStream, "import " + Const.REQUEST_PARAM_PACKAGE_NAME + ";");
+          writeLine(tempStream, "import " + Const.REQUEST_HEADER_PACKAGE_NAME + ";");
+          writeLine(tempStream, "import " + Const.REQUEST_BODY_PACKAGE_NAME + ";");
+          continue;
+        }
+
+        if (isMethod(line)) {
+          writeLine(tempStream, "    @ResponseBody");
+          String methodName = methodName(line);
+          Parameter[] parameters = methodParameters(line, fileName, lineNumber);
+          writeLine(tempStream, "    @PostMapping(value = \"/" + methodName + "\""
+              + ", produces = \"x-application/hessian2\""
+              + ", consumes = \"x-application/hessian2\""
+              + ")");
+          writeLine(tempStream, line.substring(0, line.indexOf("(") + 1)
+              + buildParameters(parameters, fileName, lineNumber) + ");");
+          continue;
+        }
+
+        writeLine(tempStream, line);
+      }
+
+      OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
+      tempStream.writeTo(fileWriter);
+      fileWriter.close();
+    }
   }
 
-  private static ArrayList<String> paramHandling(String line, File file) {
-    String[] tempParams = line.substring(line.indexOf("(") + 1, line.lastIndexOf(")"))
-        .replaceAll(",", " ").split(" ");
-    if (tempParams.length == 1) {
-      return null;
+  public static String buildParameters(Parameter[] parameters, String fileName, int lineNumber) {
+    StringBuilder result = new StringBuilder();
+    int bodyCount = 0;
+    for (int i = 0; i < parameters.length; i++) {
+      Parameter parameter = parameters[i];
+      if (i > 0) {
+        result.append(", ");
+      }
+      if (parameter.isSimpleType()) {
+        result.append("@RequestParam(value=\"" + parameter.name + "\") " + parameter.type + " " + parameter.name);
+      } else if (parameter.isStringType()) {
+        result.append("@RequestHeader(value=\"" + parameter.name + "\") " + parameter.type + " " + parameter.name);
+      } else {
+        result.append("@RequestBody " + parameter.type + " " + parameter.name);
+        bodyCount++;
+      }
     }
-    int requestBodyCount = 0;
-    List<String> paramStrings = Arrays.stream(tempParams)
-        .filter(param -> !"".equals(param))
-        .collect(Collectors.toList());
-    ArrayList<String> params = new ArrayList<>(paramStrings.size());
-    for (int i = 0; i < paramStrings.size(); i++) {
-      String tempParam = paramStrings.get(i);
-      if (i % 2 == 0) {
-        if (isComplexType(tempParam)) {
-          params.add("@RequestBody " + tempParam);
-          requestBodyCount++;
-          if (requestBodyCount >= 2) {
-            String methodName = line.trim().substring(line.trim().indexOf(" ") + 1, line.trim().indexOf("("));
-            LOGGER.error("RequestBody too much, need to reconstruct parameters and method name is {} of {}",
-                methodName, file.getName());
+    if (bodyCount > 1) {
+      LOGGER.error("File has too many body parameters {} {}.", fileName, lineNumber);
+    }
+    return result.toString();
+  }
+
+  public static Parameter[] methodParameters(String line, String fileName, int lineNumber) {
+    Matcher matcher = PATTERN_METHOD_PARAMETERS.matcher(line);
+    if (matcher.find()) {
+      String name = matcher.group();
+      name = name.substring(1, name.length() - 1).trim();
+      if (name.isEmpty()) {
+        return new Parameter[0];
+      }
+      String[] pairs = methodParametersTokens(name);
+      if (pairs.length % 2 != 0) {
+        throw new IllegalStateException("wrong method detected " + fileName + " " + lineNumber);
+      }
+      Parameter[] result = new Parameter[pairs.length / 2];
+      for (int i = 0; i < pairs.length; i = i + 2) {
+        result[i / 2] = new Parameter(pairs[i].trim(), pairs[i + 1].trim());
+      }
+      return result;
+    }
+    throw new IllegalStateException("wrong method detected " + line);
+  }
+
+  public static String[] methodParametersTokens(String line) {
+    List<String> tokens = new ArrayList<>();
+    StringBuilder token = new StringBuilder();
+    line = line.trim();
+    char[] chars = line.toCharArray();
+    boolean genericBegin = false;
+    for (char c : chars) {
+      if (c == '<') {
+        genericBegin = true;
+      }
+      if (c == '>') {
+        genericBegin = false;
+      }
+      if (genericBegin) {
+        token.append(c);
+      } else {
+        if (c == ' ' || c == ',') {
+          if (token.length() > 0) {
+            tokens.add(token.toString());
+            token.setLength(0);
           }
         } else {
-          params.add("@RequestParam(value=\"" + paramStrings.get(i + 1) + "\") " + tempParam);
+          token.append(c);
         }
-        continue;
-      }
-      params.add(tempParam);
-    }
-    params.add(String.valueOf(requestBodyCount));
-    return params;
-  }
-
-  private static boolean isComplexType(String param) {
-    ParamValueType[] values = ParamValueType.values();
-    for (ParamValueType value : values) {
-      if (param.equalsIgnoreCase(value.name()) || "int".equals(value.name()) || "char".equals(value.name())) {
-        return false;
       }
     }
-    return true;
+    if (token.length() > 0) {
+      tokens.add(token.toString());
+      token.setLength(0);
+    }
+    return tokens.toArray(new String[0]);
   }
 
-  private String postMappingString(String resultTypeValue, String router, String bodyCount) {
-    StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append("  @PostMapping(value = \"/")
-        .append(router)
-        .append("\"");
-    if (isComplexType(resultTypeValue)) {
-      stringBuilder.append(", produces = \"x-application/hessian2\"");
+  public static String methodName(String line) {
+    Matcher matcher = PATTERN_METHOD_NAME.matcher(line);
+    if (matcher.find()) {
+      String name = matcher.group();
+      return name.substring(1, name.length() - 1);
     }
-    if (Integer.parseInt(bodyCount) >= 1) {
-      stringBuilder.append(", consumes = \"x-application/hessian2\"");
-    }
-    stringBuilder.append(")");
-    return new String(stringBuilder);
+    throw new IllegalStateException("wrong method detected " + line);
   }
 
-  private String interfaceInfo(String line, ArrayList<String> paramList) {
-    String substring = line.substring(0, line.indexOf("("));
-    if (Integer.parseInt(paramList.get(paramList.size() - 1)) > 1) {
-      return line;
-    }
-    paramList.remove(paramList.get(paramList.size() - 1));
-    StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append(substring)
-        .append("(");
-    for (int i = 0; i < paramList.size(); i++) {
-      if (i % 2 == 0) {
-        stringBuilder.append(paramList.get(i)).append(" ");
-        continue;
+  public static boolean isMethod(String line) {
+    return PATTERN_METHOD.matcher(line).matches();
+  }
+
+  private boolean isInterfaceFile(List<String> lines) {
+    for (String line : lines) {
+      if (line.startsWith("public interface") || line.startsWith("interface")) {
+        return true;
       }
-      if (i == (paramList.size() - 1)) {
-        stringBuilder.append(paramList.get(i));
-        continue;
-      }
-      stringBuilder.append(paramList.get(i)).append(", ");
     }
-    stringBuilder.append(");");
-    return new String(stringBuilder);
-  }
-
-  private boolean isEffectiveInterface(String line) {
-    Pattern pattern = Pattern.compile(ROUTER_REGEX_PATTERN);
-    Matcher matcher = pattern.matcher(line);
-    return matcher.find();
+    return false;
   }
 }
 

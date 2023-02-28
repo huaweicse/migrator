@@ -16,6 +16,9 @@ public class Const implements InitializingBean {
   @Value("${spring.requestParam.packageName:org.springframework.web.bind.annotation.RequestParam}")
   private String requestParamPackageName;
 
+  @Value("${spring.requestHeader.packageName:org.springframework.web.bind.annotation.RequestHeader}")
+  private String requestHeaderPackageName;
+
   @Value("${spring.requestBody.packageName:org.springframework.web.bind.annotation.RequestBody}")
   private String requestBodyPackageName;
 
@@ -88,6 +91,8 @@ public class Const implements InitializingBean {
 
   public static String REQUEST_PARAM_PACKAGE_NAME;
 
+  public static String REQUEST_HEADER_PACKAGE_NAME;
+
   public static String REQUEST_BODY_PACKAGE_NAME;
 
   public static String AUTOWIRED_PACKAGE_NAME;
@@ -123,6 +128,7 @@ public class Const implements InitializingBean {
     RESPONSE_BODY_PACKAGE_NAME = responseBodyPackageName;
     POST_MAPPING_PACKAGE_NAME = postMappingPackageName;
     REQUEST_PARAM_PACKAGE_NAME = requestParamPackageName;
+    REQUEST_HEADER_PACKAGE_NAME = requestHeaderPackageName;
     REQUEST_BODY_PACKAGE_NAME = requestBodyPackageName;
     AUTOWIRED_PACKAGE_NAME = autowiredPackageName;
     FEIGN_CLIENT_PACKAGE_NAME = feignClientPackageName;
