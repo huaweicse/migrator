@@ -38,7 +38,7 @@ public class ModifyHSFAction implements Action {
   @Override
   public void run(String... args) throws Exception {
     Action[] actions = new Action[] {modifyHSFInterface2RestAction, modifyHSFProviderAction
-        , modifyHSFConsumerAction, modifyHSFAddBootstrapYamlAction, modifyHSFPomAction, modifyHSFMainClassAction};
+        , modifyHSFConsumerAction, modifyHSFMainClassAction};
     for (Action action : actions) {
       action.run(args);
     }

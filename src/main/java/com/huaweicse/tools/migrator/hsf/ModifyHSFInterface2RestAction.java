@@ -35,7 +35,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   private static final String HSF_PROVIDER = "@HSFProvider";
 
   private static final Pattern PATTERN_METHOD = Pattern.compile(
-      "[ a-zA-Z0-9<>\\[\\],]+\\([ a-zA-Z0-9<>\\[\\],\\.]*\\);[ ]*");
+      "[ a-zA-Z0-9<>\\[\\],]*[a-zA-Z]+[ a-zA-Z0-9<>\\[\\],]* [a-zA-Z0-9]+\\([ a-zA-Z0-9<>\\[\\],\\.]*\\);[ ]*");
 
   private static final Pattern PATTERN_METHOD_NAME = Pattern.compile(" [a-zA-Z0-9]+\\(");
 

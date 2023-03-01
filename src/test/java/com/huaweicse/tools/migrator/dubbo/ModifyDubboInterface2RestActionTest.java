@@ -34,7 +34,7 @@ public class ModifyDubboInterface2RestActionTest {
 
   @AfterEach
   public void tearDown() throws Exception {
-    FileUtils.deleteDirectory(new File(TEMP_DIR_PATH));
+//    FileUtils.deleteDirectory(new File(TEMP_DIR_PATH));
   }
 
 

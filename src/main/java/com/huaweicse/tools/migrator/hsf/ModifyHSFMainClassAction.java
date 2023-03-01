@@ -97,6 +97,7 @@ public class ModifyHSFMainClassAction extends FileAction {
     if (!file.getName().endsWith(".java")) {
       return false;
     }
-    return fileContains(file, "static void main");
+    return fileContains(file, "static void main")
+        && fileContains(file, "PandoraBootstrap.run");
   }
 }

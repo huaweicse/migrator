@@ -32,6 +32,8 @@ public class ModifyHSFProviderAction extends FileAction {
 
   private static final String HSF_PROVIDER = "@HSFProvider";
 
+  private static final String HSF_PROVIDER_COMMENT = "//@HSFProvider";
+
   @Override
   public void run(String... args) throws Exception {
     List<File> acceptedFiles = acceptedFiles(args[0]);
@@ -43,7 +45,7 @@ public class ModifyHSFProviderAction extends FileAction {
     if (!file.getName().endsWith(".java")) {
       return false;
     }
-    return fileContains(file, HSF_PROVIDER);
+    return fileContains(file, HSF_PROVIDER) && !fileContains(file, HSF_PROVIDER_COMMENT);
   }
 
   private void replaceContent(List<File> acceptedFiles) throws IOException {
