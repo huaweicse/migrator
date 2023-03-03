@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import com.huaweicse.tools.migrator.Utils;
 
 @SpringBootTest
-public class ModifyHSFProviderActionTest {
+public class ModifySchedulerJobActionTest {
 
   private static final String BASE_PATH = System.getProperty("user.dir");
 
@@ -22,7 +22,7 @@ public class ModifyHSFProviderActionTest {
   private String fileSeparator = File.separator;
 
   @Autowired
-  private ModifyHSFProviderAction modifyHSFProviderAction;
+  private ModifySchedulerJobAction modifySchedulerJobAction;
 
   @BeforeEach
   public void setUp() throws Exception {
@@ -34,8 +34,8 @@ public class ModifyHSFProviderActionTest {
   }
 
   @AfterEach
-  public void tearDown() throws Exception  {
-    FileUtils.deleteDirectory(new File(TEMP_DIR_PATH));
+  public void tearDown() throws Exception {
+
   }
 
 
@@ -43,12 +43,11 @@ public class ModifyHSFProviderActionTest {
   public void testModifyHSFProviderAction() throws Exception {
     String localBaseFilePath = BASE_PATH + fileSeparator + "testfiles";
     String tempBaseFilePath = TEMP_DIR_PATH + fileSeparator + "input";
-    modifyHSFProviderAction.run(tempBaseFilePath);
+    modifySchedulerJobAction.run(tempBaseFilePath);
 
-    String fileName = "HSFInterfaceServiceImpl.java";
+    String fileName = "ArchiveApiServerLogJob.java";
     Utils.assertFileContentEquals(
-       localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+        localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
         tempBaseFilePath + fileSeparator + fileName);
   }
-
 }

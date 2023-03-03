@@ -35,11 +35,11 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   private static final String HSF_PROVIDER = "@HSFProvider";
 
   private static final Pattern PATTERN_METHOD = Pattern.compile(
-      "[ a-zA-Z0-9<>\\[\\],]*[a-zA-Z]+[ a-zA-Z0-9<>\\[\\],]* [a-zA-Z0-9]+\\([ a-zA-Z0-9<>\\[\\],\\.]*\\);[ ]*");
+      "[\\sa-zA-Z0-9<>\\[\\],]*[a-zA-Z]+[ a-zA-Z0-9<>\\[\\],]* [a-zA-Z0-9]+\\([\\sa-zA-Z0-9<>\\[\\],\\.]*\\);[\\s]*");
 
   private static final Pattern PATTERN_METHOD_NAME = Pattern.compile(" [a-zA-Z0-9]+\\(");
 
-  private static final Pattern PATTERN_METHOD_PARAMETERS = Pattern.compile("\\([ a-zA-Z0-9<>\\[\\],\\.]*\\)");
+  private static final Pattern PATTERN_METHOD_PARAMETERS = Pattern.compile("\\([\\sa-zA-Z0-9<>\\[\\],\\.]*\\)");
 
   @Override
   public void run(String... args) throws Exception {
@@ -88,9 +88,8 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
       CharArrayWriter tempStream = new CharArrayWriter();
       boolean notesBegin = false;
-      int lineNumber = 0;
-      for (String line : lines) {
-        lineNumber++;
+      for (int lineNumber = 0; lineNumber < lines.size(); lineNumber++) {
+        String line = lines.get(lineNumber);
         // 空行
         if (line.trim().isEmpty()) {
           writeLine(tempStream, line);
@@ -132,6 +131,9 @@ public class ModifyHSFInterface2RestAction extends FileAction {
           writeLine(tempStream, "    @ResponseBody");
           String methodName = methodName(line);
           Parameter[] parameters = methodParameters(line, fileName, lineNumber);
+          if (parameters == null) {
+            continue;
+          }
           writeLine(tempStream, "    @PostMapping(value = \"/" + methodName + "\""
               + ", produces = \"x-application/hessian2\""
               + ", consumes = \"x-application/hessian2\""
@@ -139,6 +141,28 @@ public class ModifyHSFInterface2RestAction extends FileAction {
           writeLine(tempStream, line.substring(0, line.indexOf("(") + 1)
               + buildParameters(parameters, fileName, lineNumber) + ");");
           continue;
+        }
+
+        //检测是否有方法换行, 如果有合并为一行处理
+        if ((line.contains("(") && !line.contains(")"))
+            && (lines.get(lineNumber + 1).contains(")") && !lines.get(lineNumber + 1).contains("("))) {
+          if (isMethod(line + lines.get(lineNumber + 1))) {
+            line = line + lines.get(lineNumber + 1);
+            lineNumber++;
+            writeLine(tempStream, "    @ResponseBody");
+            String methodName = methodName(line);
+            Parameter[] parameters = methodParameters(line, fileName, lineNumber);
+            if (parameters == null) {
+              continue;
+            }
+            writeLine(tempStream, "    @PostMapping(value = \"/" + methodName + "\""
+                + ", produces = \"x-application/hessian2\""
+                + ", consumes = \"x-application/hessian2\""
+                + ")");
+            writeLine(tempStream, line.substring(0, line.indexOf("(") + 1)
+                + buildParameters(parameters, fileName, lineNumber) + ");");
+            continue;
+          }
         }
 
         writeLine(tempStream, line);
@@ -183,7 +207,8 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       }
       String[] pairs = methodParametersTokens(name);
       if (pairs.length % 2 != 0) {
-        throw new IllegalStateException("wrong method detected " + fileName + " " + lineNumber);
+        LOGGER.error("wrong method detected " + fileName + " " + lineNumber);
+        return null;
       }
       Parameter[] result = new Parameter[pairs.length / 2];
       for (int i = 0; i < pairs.length; i = i + 2) {
@@ -191,7 +216,8 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       }
       return result;
     }
-    throw new IllegalStateException("wrong method detected " + line);
+    LOGGER.error("wrong method detected " + fileName + " " + lineNumber);
+    return null;
   }
 
   public static String[] methodParametersTokens(String line) {
@@ -210,7 +236,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       if (genericBegin) {
         token.append(c);
       } else {
-        if (c == ' ' || c == ',') {
+        if (c == ' ' || c == ',' || c == '\r') {
           if (token.length() > 0) {
             tokens.add(token.toString());
             token.setLength(0);
