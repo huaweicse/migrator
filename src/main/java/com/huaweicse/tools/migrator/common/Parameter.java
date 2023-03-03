@@ -11,6 +11,7 @@ public class Parameter {
   public List<String> simpleType =
       Arrays.asList("int", "long", "double", "float", "byte", "short", "boolean",
           "Integer", "Long", "Double", "Float", "Byte", "Short", "Boolean",
+          "Date",
           "AdapterType", "OmsType", "E3Type", "LogisticsType", "WmsType", "TaxType", "TmsType"); // enums
 
   public Parameter(String type, String name) {

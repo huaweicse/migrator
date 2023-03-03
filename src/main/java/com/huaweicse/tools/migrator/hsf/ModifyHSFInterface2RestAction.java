@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,7 +31,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFInterface2RestAction.class);
 
-  private static final String INTERFACE_REGEX_PATTERN = "[a-zA-Z]+(.class)";
+  private static final String INTERFACE_REGEX_PATTERN = "[a-zA-Z]+[a-zA-Z0-9]*(.class)";
 
   private static final String HSF_PROVIDER = "@HSFProvider";
 
@@ -41,10 +42,14 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
   private static final Pattern PATTERN_METHOD_PARAMETERS = Pattern.compile("\\([\\sa-zA-Z0-9<>\\[\\],\\.]*\\)");
 
+  private static final List<String> ACCEPT_FILES = Arrays.asList("ISupportImportAndExport.java",
+      "IBaseService.java", "IE3BaseService.java", "ISupportCopyService.java", "IORMService.java");
+
   @Override
   public void run(String... args) throws Exception {
     List<File> acceptedFiles = acceptedFiles(args[0]);
     List<String> interfaceFileList = filterInterfaceFile(acceptedFiles);
+    interfaceFileList.addAll(ACCEPT_FILES);
     replaceContent(acceptedFiles, interfaceFileList);
   }
 
@@ -101,7 +106,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
           continue;
         }
         // 文本注释
-        if (line.trim().startsWith("*/")) {
+        if (line.trim().contains("*/")) {
           notesBegin = false;
           writeLine(tempStream, line);
           continue;
@@ -110,7 +115,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
           writeLine(tempStream, line);
           continue;
         }
-        if (line.trim().startsWith("/**")) {
+        if (line.trim().contains("/**")) {
           notesBegin = true;
           writeLine(tempStream, line);
           continue;
@@ -225,18 +230,18 @@ public class ModifyHSFInterface2RestAction extends FileAction {
     StringBuilder token = new StringBuilder();
     line = line.trim();
     char[] chars = line.toCharArray();
-    boolean genericBegin = false;
+    int genericBegin = 0;
     for (char c : chars) {
       if (c == '<') {
-        genericBegin = true;
+        genericBegin++;
       }
       if (c == '>') {
-        genericBegin = false;
+        genericBegin--;
       }
-      if (genericBegin) {
+      if (genericBegin > 0) {
         token.append(c);
       } else {
-        if (c == ' ' || c == ',' || c == '\r') {
+        if (c == ' ' || c == ',' || c == '\r' || c == '\t') {
           if (token.length() > 0) {
             tokens.add(token.toString());
             token.setLength(0);
