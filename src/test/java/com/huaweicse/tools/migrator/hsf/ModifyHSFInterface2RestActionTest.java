@@ -50,5 +50,11 @@ public class ModifyHSFInterface2RestActionTest {
     fileName = "ILogisticSproviderService.java";
     Utils.assertFileContentEquals(localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
         tempBaseFilePath + fileSeparator + fileName);
+    fileName = "IBaseService.java";
+    Utils.assertFileContentEquals(localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+        tempBaseFilePath + fileSeparator + fileName);
+    fileName = "IE3BaseService.java";
+    Utils.assertFileContentEquals(localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+        tempBaseFilePath + fileSeparator + fileName);
   }
 }

@@ -23,10 +23,10 @@ public class MigrateSupport {
   @BeforeEach
   public void setUp() throws Exception {
 //    TEMP_DIR_PATH = "D:\\anta\\temp";
-//    BASE_PATH = "D:\\anta\\anta_mw_goods";
+    BASE_PATH = "D:\\anta\\anta_mw_goods";
 //    BASE_PATH = "D:\\anta\\anta_mw_gateway_app";
 //    BASE_PATH = "D:\\anta\\anta_mw_support";
-    BASE_PATH = "D:\\anta\\anta_mw_core";
+//    BASE_PATH = "D:\\anta\\anta_mw_core";
 //
 //    FileUtils.copyDirectoryToDirectory(
 //        new File(BASE_PATH),

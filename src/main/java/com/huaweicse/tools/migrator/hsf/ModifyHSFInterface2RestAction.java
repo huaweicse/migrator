@@ -8,7 +8,9 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,12 +40,29 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   private static final Pattern PATTERN_METHOD = Pattern.compile(
       "[\\sa-zA-Z0-9<>\\[\\],]*[a-zA-Z]+[ a-zA-Z0-9<>\\[\\],]* [a-zA-Z0-9]+\\([\\sa-zA-Z0-9<>\\[\\],\\.]*\\);[\\s]*");
 
+  private static final Pattern PATTERN_API_OPERATION = Pattern.compile("\\s*@ApiOperation\\(value\\s*=\\s*\\\"[^\\\"]*\\\"");
+
   private static final Pattern PATTERN_METHOD_NAME = Pattern.compile(" [a-zA-Z0-9]+\\(");
 
   private static final Pattern PATTERN_METHOD_PARAMETERS = Pattern.compile("\\([\\sa-zA-Z0-9<>\\[\\],\\.]*\\)");
 
-  private static final List<String> ACCEPT_FILES = Arrays.asList("ISupportImportAndExport.java",
-      "IBaseService.java", "IE3BaseService.java", "ISupportCopyService.java", "IORMService.java");
+  private static final Pattern PATTER_INTERFACE = Pattern.compile("public interface.*|interface.*");
+
+  private static final Pattern PATTER_INTERFACE_EXTENDS = Pattern.compile("extends\\s+[a-zA-Z]+[a-zA-Z0-9]*");
+
+  // 无法扫描到的基类
+  private static final List<String> ACCEPT_FILES = Arrays.asList(
+      // support
+      "ISupportImportAndExport.java",
+      "IBaseService.java", "IE3BaseService.java", "ISupportCopyService.java", "IORMService.java",
+      "IShopService.java", "IAdministrationAreaService.java", "IChannelService.java", "ISupplierService.java",
+      "IWareHouseService.java", "IExtendAttributeService.java", "ILoginService.java", "ISystemParameterComService.java",
+      "ISupStrategyRelationshipService.java", "ISupStrategyService.java",
+      // goods
+      "IGoodsService.java"
+      );
+
+  private static Set<String> URL_NAMES = new HashSet<>();
 
   @Override
   public void run(String... args) throws Exception {
@@ -88,8 +107,11 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
       List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
       if (!isInterfaceFile(lines)) {
+        LOGGER.error("should be an interface file {}", fileName);
         continue;
       }
+
+      URL_NAMES.clear();
 
       CharArrayWriter tempStream = new CharArrayWriter();
       boolean notesBegin = false;
@@ -132,9 +154,22 @@ public class ModifyHSFInterface2RestAction extends FileAction {
           continue;
         }
 
+        if (isInterfaceLine(line) && line.contains("extends")) {
+          Matcher matcher = PATTER_INTERFACE_EXTENDS.matcher(line.substring(line.lastIndexOf("extends")));
+          if(matcher.find()) {
+            String extendsName = matcher.group();
+            extendsName = extendsName.substring("extends".length() + 1).trim();
+            if (!interfaceFileList.contains(extendsName + ".java")) {
+              LOGGER.error("interface not add to list [{}] {} {}", extendsName, fileName, lineNumber);
+            }
+          } else {
+            LOGGER.error("invalid interface detected {}", fileName, lineNumber);
+          }
+        }
+
         if (isMethod(line)) {
           writeLine(tempStream, "    @ResponseBody");
-          String methodName = methodName(line);
+          String methodName = methodName(line, lines.get(lineNumber -1), fileName, lineNumber);
           Parameter[] parameters = methodParameters(line, fileName, lineNumber);
           if (parameters == null) {
             continue;
@@ -153,9 +188,8 @@ public class ModifyHSFInterface2RestAction extends FileAction {
             && (lines.get(lineNumber + 1).contains(")") && !lines.get(lineNumber + 1).contains("("))) {
           if (isMethod(line + lines.get(lineNumber + 1))) {
             line = line + lines.get(lineNumber + 1);
-            lineNumber++;
             writeLine(tempStream, "    @ResponseBody");
-            String methodName = methodName(line);
+            String methodName = methodName(line, lines.get(lineNumber -1), fileName, lineNumber);
             Parameter[] parameters = methodParameters(line, fileName, lineNumber);
             if (parameters == null) {
               continue;
@@ -166,6 +200,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
                 + ")");
             writeLine(tempStream, line.substring(0, line.indexOf("(") + 1)
                 + buildParameters(parameters, fileName, lineNumber) + ");");
+            lineNumber++;
             continue;
           }
         }
@@ -258,13 +293,26 @@ public class ModifyHSFInterface2RestAction extends FileAction {
     return tokens.toArray(new String[0]);
   }
 
-  public static String methodName(String line) {
+  public static String methodName(String line, String previousLine, String fileName, int lineNumber) {
+    Matcher operation = PATTERN_API_OPERATION.matcher(previousLine);
+    if(operation.find()) {
+      String name = operation.group();
+      return checkName(name.substring(name.indexOf("\"") + 1, name.lastIndexOf("\"")), fileName, lineNumber);
+    }
     Matcher matcher = PATTERN_METHOD_NAME.matcher(line);
     if (matcher.find()) {
       String name = matcher.group();
-      return name.substring(1, name.length() - 1);
+      return checkName(name.substring(1, name.length() - 1), fileName, lineNumber);
     }
     throw new IllegalStateException("wrong method detected " + line);
+  }
+
+  private static String checkName(String name, String fileName, int lineNumber) {
+    if(URL_NAMES.contains(name)) {
+      LOGGER.error("override method detected " + fileName + " " + lineNumber);
+    }
+    URL_NAMES.add(name);
+    return name;
   }
 
   public static boolean isMethod(String line) {
@@ -273,9 +321,16 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
   private boolean isInterfaceFile(List<String> lines) {
     for (String line : lines) {
-      if (line.startsWith("public interface") || line.startsWith("interface")) {
+      if (isInterfaceLine(line)) {
         return true;
       }
+    }
+    return false;
+  }
+
+  private boolean isInterfaceLine(String line) {
+    if (PATTER_INTERFACE.matcher(line).matches()) {
+      return true;
     }
     return false;
   }

@@ -12,11 +12,6 @@ public class UtilsTest {
     Assertions.assertTrue(ModifyHSFInterface2RestAction.isMethod("    String echo(String string);"));
     Assertions.assertTrue(ModifyHSFInterface2RestAction.isMethod("    ServiceResult enable(String token, Long id);"));
 
-    Assertions.assertEquals("when", ModifyHSFInterface2RestAction.methodName("    String when();"));
-    Assertions.assertEquals("echo", ModifyHSFInterface2RestAction.methodName("    String echo(String string);"));
-    Assertions.assertEquals("enable",
-        ModifyHSFInterface2RestAction.methodName("    ServiceResult enable(String token, Long id);"));
-
     Parameter[] parameters = ModifyHSFInterface2RestAction.methodParameters("    String when();", null, 0);
     Assertions.assertEquals(0, parameters.length);
     parameters = ModifyHSFInterface2RestAction.methodParameters("    String echo(String string);", null, 0);
