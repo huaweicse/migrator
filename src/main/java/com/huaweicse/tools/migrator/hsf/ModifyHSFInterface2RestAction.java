@@ -38,7 +38,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   private static final String HSF_PROVIDER = "@HSFProvider";
 
   private static final Pattern PATTERN_METHOD = Pattern.compile(
-      "[\\sa-zA-Z0-9<>\\[\\],]*[a-zA-Z]+[ a-zA-Z0-9<>\\[\\],]* [a-zA-Z0-9]+\\([\\sa-zA-Z0-9<>\\[\\],\\.]*\\);[\\s]*");
+      "[\\sa-zA-Z0-9<>\\[\\],]*[a-zA-Z]+[ a-zA-Z0-9<>\\[\\],?]* [a-zA-Z0-9]+\\([\\sa-zA-Z0-9<>\\[\\],\\.]*\\);[\\s]*");
 
   private static final Pattern PATTERN_API_OPERATION = Pattern.compile("\\s*@ApiOperation\\(value\\s*=\\s*\\\"[^\\\"]*\\\"");
 
@@ -59,7 +59,9 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       "IWareHouseService.java", "IExtendAttributeService.java", "ILoginService.java", "ISystemParameterComService.java",
       "ISupStrategyRelationshipService.java", "ISupStrategyService.java",
       // goods
-      "IGoodsService.java"
+      "IGoodsService.java",
+      // stock
+      "IOneE3BaseService.java", "IE3BaseEndpointService.java"
       );
 
   private static Set<String> URL_NAMES = new HashSet<>();

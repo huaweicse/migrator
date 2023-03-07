@@ -69,7 +69,7 @@ public class ModifyHSFConsumerAction extends FileAction {
             continue;
           }
           // 文本注释
-          if (line.trim().startsWith("*/")) {
+          if (line.trim().contains("*/")) {
             notesBegin = false;
             writeLine(tempStream, line);
             continue;
@@ -78,7 +78,7 @@ public class ModifyHSFConsumerAction extends FileAction {
             writeLine(tempStream, line);
             continue;
           }
-          if (line.trim().startsWith("/**")) {
+          if (line.trim().contains("/**")) {
             notesBegin = true;
             writeLine(tempStream, line);
             continue;

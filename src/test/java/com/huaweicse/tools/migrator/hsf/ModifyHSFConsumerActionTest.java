@@ -81,6 +81,9 @@ public class ModifyHSFConsumerActionTest {
     String fileName = "GoodsServiceHsfConfig.java";
     Utils.assertFileContentEquals(genFilePath(TEMP_DIR_PATH, "input", fileName),
         genFilePath(localFileBasePath, "output", fileName));
+    fileName = "GoodsHsfConfig.java";
+    Utils.assertFileContentEquals(genFilePath(TEMP_DIR_PATH, "input", fileName),
+        genFilePath(localFileBasePath, "output", fileName));
   }
 
   private String genFilePath(String fileBasePath, String type, String fileName) {
