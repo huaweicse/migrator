@@ -35,7 +35,7 @@ public class ModifyHSFProviderActionTest {
 
   @AfterEach
   public void tearDown() throws Exception  {
-    FileUtils.deleteDirectory(new File(TEMP_DIR_PATH));
+
   }
 
 
@@ -48,6 +48,11 @@ public class ModifyHSFProviderActionTest {
     String fileName = "HSFInterfaceServiceImpl.java";
     Utils.assertFileContentEquals(
        localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+        tempBaseFilePath + fileSeparator + fileName);
+
+    fileName = "RetailAnta806Provider.java";
+    Utils.assertFileContentEquals(
+        localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
         tempBaseFilePath + fileSeparator + fileName);
   }
 

@@ -38,9 +38,10 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   private static final String HSF_PROVIDER = "@HSFProvider";
 
   private static final Pattern PATTERN_METHOD = Pattern.compile(
-      "[\\sa-zA-Z0-9<>\\[\\],]*[a-zA-Z]+[ a-zA-Z0-9<>\\[\\],?]* [a-zA-Z0-9]+\\([\\sa-zA-Z0-9<>\\[\\],\\.]*\\);[\\s]*");
+      "[\\sa-zA-Z0-9<>\\[\\],]*[a-zA-Z]+[ a-zA-Z0-9<>\\[\\],?]* [a-zA-Z0-9]+\\([\\sa-zA-Z0-9<>@\\[\\],\\.]*\\)[\\s]*;[\\s]*");
 
-  private static final Pattern PATTERN_API_OPERATION = Pattern.compile("\\s*@ApiOperation\\(value\\s*=\\s*\\\"[^\\\"]*\\\"");
+  private static final Pattern PATTERN_API_OPERATION = Pattern.compile(
+      "\\s*@ApiOperation\\(value\\s*=\\s*\\\"[^\\\"]*\\\"");
 
   private static final Pattern PATTERN_METHOD_NAME = Pattern.compile(" [a-zA-Z0-9]+\\(");
 
@@ -62,7 +63,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       "IGoodsService.java",
       // stock
       "IOneE3BaseService.java", "IE3BaseEndpointService.java"
-      );
+  );
 
   private static Set<String> URL_NAMES = new HashSet<>();
 
@@ -113,6 +114,8 @@ public class ModifyHSFInterface2RestAction extends FileAction {
         continue;
       }
 
+      checkAndLogMultiLines(lines, fileName);
+
       URL_NAMES.clear();
 
       CharArrayWriter tempStream = new CharArrayWriter();
@@ -158,7 +161,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
         if (isInterfaceLine(line) && line.contains("extends")) {
           Matcher matcher = PATTER_INTERFACE_EXTENDS.matcher(line.substring(line.lastIndexOf("extends")));
-          if(matcher.find()) {
+          if (matcher.find()) {
             String extendsName = matcher.group();
             extendsName = extendsName.substring("extends".length() + 1).trim();
             if (!interfaceFileList.contains(extendsName + ".java")) {
@@ -171,7 +174,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
         if (isMethod(line)) {
           writeLine(tempStream, "    @ResponseBody");
-          String methodName = methodName(line, lines.get(lineNumber -1), fileName, lineNumber);
+          String methodName = methodName(line, lines.get(lineNumber - 1), fileName, lineNumber);
           Parameter[] parameters = methodParameters(line, fileName, lineNumber);
           if (parameters == null) {
             continue;
@@ -191,7 +194,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
           if (isMethod(line + lines.get(lineNumber + 1))) {
             line = line + lines.get(lineNumber + 1);
             writeLine(tempStream, "    @ResponseBody");
-            String methodName = methodName(line, lines.get(lineNumber -1), fileName, lineNumber);
+            String methodName = methodName(line, lines.get(lineNumber - 1), fileName, lineNumber);
             Parameter[] parameters = methodParameters(line, fileName, lineNumber);
             if (parameters == null) {
               continue;
@@ -213,6 +216,19 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);
       tempStream.writeTo(fileWriter);
       fileWriter.close();
+    }
+  }
+
+  private void checkAndLogMultiLines(List<String> lines, String fileName) {
+    for (int i = 0; i < lines.size(); i++) {
+      String line = lines.get(i);
+      if (line.contains("(") && !line.contains(")")) {
+        String nextLine = lines.get(i + 1);
+        if (nextLine.contains(")") && !nextLine.contains("(")) {
+          continue;
+        }
+        LOGGER.error("File may contains multiple line methods {} {}", fileName, i);
+      }
     }
   }
 
@@ -297,7 +313,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
   public static String methodName(String line, String previousLine, String fileName, int lineNumber) {
     Matcher operation = PATTERN_API_OPERATION.matcher(previousLine);
-    if(operation.find()) {
+    if (operation.find()) {
       String name = operation.group();
       return checkName(name.substring(name.indexOf("\"") + 1, name.lastIndexOf("\"")), fileName, lineNumber);
     }
@@ -310,7 +326,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   }
 
   private static String checkName(String name, String fileName, int lineNumber) {
-    if(URL_NAMES.contains(name)) {
+    if (URL_NAMES.contains(name)) {
       LOGGER.error("override method detected " + fileName + " " + lineNumber);
     }
     URL_NAMES.add(name);

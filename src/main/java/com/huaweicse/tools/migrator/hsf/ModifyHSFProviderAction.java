@@ -28,7 +28,7 @@ public class ModifyHSFProviderAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFProviderAction.class);
 
-  private static final String INTERFACE_REGEX_PATTERN = "[a-zA-Z]+(.class)";
+  private static final String INTERFACE_REGEX_PATTERN = "[a-zA-Z]+[a-zA-Z0-9]*(.class)";
 
   private static final String HSF_PROVIDER = "@HSFProvider";
 
