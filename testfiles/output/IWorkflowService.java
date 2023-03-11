@@ -188,7 +188,7 @@ public interface IWorkflowService {
      */
     @ResponseBody
     @PostMapping(value = "/saveProcess", produces = "x-application/hessian2", consumes = "x-application/hessian2")
-    void saveProcess(@RequestHeader(value="token") String token, @RequestHeader(value="key") String key, @RequestHeader(value="dataId") String dataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestHeader(value="processTemplateId") String processTemplateId, @RequestBody Map<String, ?> variables);
+    void saveProcess(@RequestHeader(value="token") String token, @RequestHeader(value="key") String key, @RequestHeader(value="dataId") String dataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestHeader(value="processTemplateId") String processTemplateId, @RequestBody Map<String, ?> variables) throws Exception;
 
     /**
      * 如果是管理员可以获取所有任务，否则根据用户ID或用户角色IDs获取任务。
@@ -283,7 +283,7 @@ public interface IWorkflowService {
      */
     @ResponseBody
     @PostMapping(value = "/submitProcess", produces = "x-application/hessian2", consumes = "x-application/hessian2")
-    void submitProcess(@RequestHeader(value="token") String token, @RequestBody ServiceResult result, @RequestHeader(value="key") String key, @RequestHeader(value="dataId") String dataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestBody Map<String, ?> variables);
+    void submitProcess(@RequestHeader(value="token") String token, @RequestBody ServiceResult result, @RequestHeader(value="key") String key, @RequestHeader(value="dataId") String dataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestBody Map<String, ?> variables) throws Exception;
 
     /**
      * 根据key、dataId、userId和groupIds找到对应任务并放弃/删除
@@ -297,7 +297,7 @@ public interface IWorkflowService {
      */
     @ResponseBody
     @PostMapping(value = "/giveupProcess", produces = "x-application/hessian2", consumes = "x-application/hessian2")
-    void giveupProcess(@RequestHeader(value="token") String token, @RequestBody ServiceResult result, @RequestHeader(value="key") String key, @RequestHeader(value="dataId") String dataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestBody Map<String, ?> variables);
+    void giveupProcess(@RequestHeader(value="token") String token, @RequestBody ServiceResult result, @RequestHeader(value="key") String key, @RequestHeader(value="dataId") String dataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestBody Map<String, ?> variables) throws Exception;
 
     /**
      * 根据key、dataId、userId和groupIds找到对应任务并同意
@@ -311,7 +311,7 @@ public interface IWorkflowService {
      */
     @ResponseBody
     @PostMapping(value = "/approveProcess", produces = "x-application/hessian2", consumes = "x-application/hessian2")
-    void approveProcess(@RequestHeader(value="token") String token, @RequestBody ServiceResult result, @RequestHeader(value="key") String key, @RequestHeader(value="dataId") String dataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestBody Map<String, ?> variables);
+    void approveProcess(@RequestHeader(value="token") String token, @RequestBody ServiceResult result, @RequestHeader(value="key") String key, @RequestHeader(value="dataId") String dataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestBody Map<String, ?> variables) throws Exception;
 
     /**
      * 根据key、dataId、userId和groupIds找到对应任务并拒绝
@@ -325,7 +325,7 @@ public interface IWorkflowService {
      */
     @ResponseBody
     @PostMapping(value = "/refuseProcess", produces = "x-application/hessian2", consumes = "x-application/hessian2")
-    void refuseProcess(@RequestHeader(value="token") String token, @RequestBody ServiceResult result, @RequestHeader(value="key") String key, @RequestHeader(value="dataId") String dataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestBody Map<String, ?> variables);
+    void refuseProcess(@RequestHeader(value="token") String token, @RequestBody ServiceResult result, @RequestHeader(value="key") String key, @RequestHeader(value="dataId") String dataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestBody Map<String, ?> variables) throws Exception;
 
     /**
      * 根据key、dataId、userId和groupIds找到对应任务并调用子任务
@@ -340,7 +340,7 @@ public interface IWorkflowService {
      */
     @ResponseBody
     @PostMapping(value = "/callChildProcess", produces = "x-application/hessian2", consumes = "x-application/hessian2")
-    void callChildProcess(@RequestHeader(value="token") String token, @RequestHeader(value="parentKey") String parentKey, @RequestHeader(value="parentDataId") String parentDataId, @RequestHeader(value="childDataId") String childDataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestBody Map<String, ?> variables);
+    void callChildProcess(@RequestHeader(value="token") String token, @RequestHeader(value="parentKey") String parentKey, @RequestHeader(value="parentDataId") String parentDataId, @RequestHeader(value="childDataId") String childDataId, @RequestHeader(value="userId") String userId, @RequestBody List<String> groupIds, @RequestBody Map<String, ?> variables) throws Exception;
 
     /**
      * （可忽略） 从平台表中获取流程定义信息

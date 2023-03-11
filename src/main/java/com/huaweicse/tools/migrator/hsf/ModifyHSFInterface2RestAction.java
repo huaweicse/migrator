@@ -191,8 +191,9 @@ public class ModifyHSFInterface2RestAction extends FileAction {
               + ", produces = \"x-application/hessian2\""
               + ", consumes = \"x-application/hessian2\""
               + ")");
-          writeLine(tempStream, line.substring(0, line.indexOf("(") + 1)
-              + buildParameters(parameters, fileName, lineNumber) + line.substring(line.indexOf(")")));
+          tempStream.write(line.substring(0, line.indexOf("(") + 1));
+          tempStream.write(buildParameters(parameters, fileName, lineNumber));
+          writeLine(tempStream, line.substring(line.indexOf(")")));
           continue;
         }
 
@@ -211,8 +212,9 @@ public class ModifyHSFInterface2RestAction extends FileAction {
                 + ", produces = \"x-application/hessian2\""
                 + ", consumes = \"x-application/hessian2\""
                 + ")");
-            writeLine(tempStream, line.substring(0, line.indexOf("(") + 1)
-                + buildParameters(parameters, fileName, lineNumber) + ");");
+            tempStream.write(line.substring(0, line.indexOf("(") + 1));
+            tempStream.write(buildParameters(parameters, fileName, lineNumber));
+            writeLine(tempStream, line.substring(line.indexOf(")")));
             lineNumber++;
             continue;
           }
