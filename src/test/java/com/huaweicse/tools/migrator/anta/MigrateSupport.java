@@ -24,8 +24,8 @@ public class MigrateSupport {
   public void setUp() throws Exception {
 //    TEMP_DIR_PATH = "D:\\anta\\temp";
 //    BASE_PATH = "D:\\anta\\anta_mw_customer";
-//    BASE_PATH = "D:\\anta\\anta_mw_customers";
-    BASE_PATH = "D:\\anta\\anta_mw_stock";
+    BASE_PATH = "D:\\anta\\anta_mw_customers";
+//    BASE_PATH = "D:\\anta\\anta_mw_stock";
 //    BASE_PATH = "D:\\anta\\anta_mw_distributes";
 //    BASE_PATH = "D:\\anta\\anta_mw_report";
 //    BASE_PATH = "D:\\anta\\anta_mw_market";

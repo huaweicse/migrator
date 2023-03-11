@@ -294,6 +294,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
         if (typeAndName.endsWith(",")) {
           typeAndName = typeAndName.substring(0, typeAndName.length() - 1);
         }
+        typeAndName = typeAndName.trim();
         Matcher nameMatcher = PATTERN_METHOD_PARAMETER_NAME.matcher(typeAndName);
         if (nameMatcher.find()) {
           String name = nameMatcher.group();

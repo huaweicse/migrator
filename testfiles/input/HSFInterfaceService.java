@@ -3,6 +3,9 @@ package com.huaweicse.tools.migrator;
 
 public interface HSFInterfaceService {
 
+  List<CusShopReturnWarehouseModel> selectReturnWarehouseByInfo(String shopBrandCode, String channelCode
+      , Integer warehouseType,Integer channelType, String shopCode);
+
   String hello(String str);
 
   // 无参数
