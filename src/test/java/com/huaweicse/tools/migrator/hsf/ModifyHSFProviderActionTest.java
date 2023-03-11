@@ -54,6 +54,11 @@ public class ModifyHSFProviderActionTest {
     Utils.assertFileContentEquals(
         localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
         tempBaseFilePath + fileSeparator + fileName);
+
+    fileName = "DataRangeProvider.java";
+    Utils.assertFileContentEquals(
+        localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+        tempBaseFilePath + fileSeparator + fileName);
   }
 
 }

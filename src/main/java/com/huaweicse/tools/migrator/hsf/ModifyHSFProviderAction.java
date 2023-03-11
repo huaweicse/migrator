@@ -52,8 +52,37 @@ public class ModifyHSFProviderAction extends FileAction {
     for (File file : acceptedFiles) {
       List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
       CharArrayWriter tempStream = new CharArrayWriter();
+      boolean notesBegin = false;
+      String interfaceName = null;
       for (int i = 0; i < lines.size(); i++) {
         String line = lines.get(i);
+
+        // 空行
+        if (line.trim().isEmpty()) {
+          writeLine(tempStream, line);
+          continue;
+        }
+        // 行注释
+        if (line.trim().startsWith("//")) {
+          writeLine(tempStream, line);
+          continue;
+        }
+        // 文本注释
+        if (line.trim().contains("*/")) {
+          notesBegin = false;
+          writeLine(tempStream, line);
+          continue;
+        }
+        if (notesBegin) {
+          writeLine(tempStream, line);
+          continue;
+        }
+        if (line.trim().contains("/**")) {
+          notesBegin = true;
+          writeLine(tempStream, line);
+          continue;
+        }
+
         if (line.contains(Const.HSF_PROVIDER_PACKAGE_NAME)) {
           line = line.replace(Const.HSF_PROVIDER_PACKAGE_NAME, Const.REQUEST_MAPPING_PACKAGE_NAME);
           writeLine(tempStream, line);
@@ -63,21 +92,38 @@ public class ModifyHSFProviderAction extends FileAction {
         if (line.trim().startsWith(HSF_PROVIDER)) {
           Pattern pattern = Pattern.compile(INTERFACE_REGEX_PATTERN);
           Matcher matcher = pattern.matcher(line);
-          String tempRouter = null;
           while (matcher.find()) {
-            tempRouter = matcher.group().replace(".class", "");
+            interfaceName = matcher.group().replace(".class", "");
           }
-          if (tempRouter == null) {
+          if (interfaceName == null) {
             LOGGER.error(ERROR_MESSAGE, "@HSFProvicer not hava interface property.",
                 file.getAbsolutePath(),
                 i);
             continue;
           }
           writeLine(tempStream, "@RestController");
+          writeLine(tempStream, "@org.springframework.context.annotation.Lazy");
           writeLine(tempStream,
-              "@RequestMapping(\"/" + tempRouter.substring(0, 1).toLowerCase() + tempRouter.substring(1) + "\")");
+              "@RequestMapping(\"/" + interfaceName.substring(0, 1).toLowerCase() + interfaceName.substring(1) + "\")");
           continue;
         }
+//        // 注入的 service bean 设置为 Lazy， 避免循环依赖。
+//        if (line.contains("@Autowired") || line.contains("@Resource")) {
+//          String nextLine = lines.get(i + 1);
+//          if (nextLine.contains(" " + interfaceName + " ")) {
+//            writeLine(tempStream, line);
+//            writeLine(tempStream, "    @org.springframework.context.annotation.Lazy");
+//            continue;
+//          }
+//          if(nextLine.contains("@Qualifier")) {
+//            nextLine = lines.get(i + 2);
+//            if (nextLine.contains(" " + interfaceName + " ")) {
+//              writeLine(tempStream, line);
+//              writeLine(tempStream, "    @org.springframework.context.annotation.Lazy");
+//              continue;
+//            }
+//          }
+//        }
         writeLine(tempStream, line);
       }
       OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);

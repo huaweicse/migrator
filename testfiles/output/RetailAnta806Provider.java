@@ -2,10 +2,13 @@ package com.baison.e3.middleware.stock.service.retail;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.alibaba.boot.hsf.annotation.HSFProvider;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import com.baison.e3.middleware.stock.api.service.retail.IRetailAnta806Service;
 
-@HSFProvider(serviceInterface = IRetailAnta806Service.class)
+@RestController
+@org.springframework.context.annotation.Lazy
+@RequestMapping("/iRetailAnta806Service")
 public class RetailAnta806Provider implements IRetailAnta806Service {
 
 	@Autowired

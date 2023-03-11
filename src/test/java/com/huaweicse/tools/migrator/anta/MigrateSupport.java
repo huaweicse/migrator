@@ -25,7 +25,7 @@ public class MigrateSupport {
 //    TEMP_DIR_PATH = "D:\\anta\\temp";
 //    BASE_PATH = "D:\\anta\\anta_mw_customer";
 //    BASE_PATH = "D:\\anta\\anta_mw_customers";
-//    BASE_PATH = "D:\\anta\\anta_mw_stock-final";
+    BASE_PATH = "D:\\anta\\anta_mw_stock";
 //    BASE_PATH = "D:\\anta\\anta_mw_distributes";
 //    BASE_PATH = "D:\\anta\\anta_mw_report";
 //    BASE_PATH = "D:\\anta\\anta_mw_market";
@@ -34,7 +34,7 @@ public class MigrateSupport {
 //    BASE_PATH = "D:\\anta\\anta_mw_order";
 //    BASE_PATH = "D:\\anta\\anta_mw_goods";
 //    BASE_PATH = "D:\\anta\\anta_mw_gateway_app";
-    BASE_PATH = "D:\\anta\\anta_mw_support";
+//    BASE_PATH = "D:\\anta\\anta_mw_support";
 //    BASE_PATH = "D:\\anta\\anta_mw_alarm_app";
 //    BASE_PATH = "D:\\anta\\anta_mw_operate_app";
 //    BASE_PATH = "D:\\anta\\anta_mw_core";

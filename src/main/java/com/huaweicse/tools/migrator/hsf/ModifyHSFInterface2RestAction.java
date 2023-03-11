@@ -18,6 +18,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
@@ -33,19 +34,26 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFInterface2RestAction.class);
 
-  private static final String INTERFACE_REGEX_PATTERN = "[a-zA-Z]+[a-zA-Z0-9]*(.class)";
+  private static final String INTERFACE_REGEX_PATTERN = "[a-zA-Z]+[\\w]*(.class)";
 
   private static final String HSF_PROVIDER = "@HSFProvider";
 
   private static final Pattern PATTERN_METHOD = Pattern.compile(
-      "[\\sa-zA-Z0-9<>\\[\\],]*[a-zA-Z]+[ a-zA-Z0-9<>\\[\\],?]* [a-zA-Z0-9]+\\([\\sa-zA-Z0-9<>@\\[\\],\\.]*\\)[\\s]*;[\\s]*");
+      ".*\\s+[\\w]+\\([^()]*\\).*(;|\\{)[\\s]*");
 
   private static final Pattern PATTERN_API_OPERATION = Pattern.compile(
       "\\s*@ApiOperation\\(value\\s*=\\s*\\\"[^\\\"]*\\\"");
 
-  private static final Pattern PATTERN_METHOD_NAME = Pattern.compile(" [a-zA-Z0-9]+\\(");
+  private static final Pattern PATTERN_METHOD_NAME = Pattern.compile(" [\\w]+\\(");
 
-  private static final Pattern PATTERN_METHOD_PARAMETERS = Pattern.compile("\\([\\sa-zA-Z0-9<>\\[\\],\\.]*\\)");
+  private static final Pattern PATTERN_METHOD_PARAMETERS = Pattern.compile("\\(.*\\)");
+
+  private static final Pattern PATTERN_METHOD_PARAMETER_DEF = Pattern.compile(
+      "(@\\w+)*\\s*(([\\w.\\[\\]]+)|([\\w.\\[\\]]+<[^>]*>)) [\\w]+\\s*(,|$)");
+
+  private static final Pattern PATTERN_METHOD_PARAMETER_TYPE_NAME = Pattern.compile("(^| )(([\\w.\\[\\]]+)|([\\w.\\[\\]]+<.*>)) [\\w]+");
+
+  private static final Pattern PATTERN_METHOD_PARAMETER_NAME = Pattern.compile(" [\\w]+$");
 
   private static final Pattern PATTER_INTERFACE = Pattern.compile("public interface.*|interface.*");
 
@@ -184,7 +192,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
               + ", consumes = \"x-application/hessian2\""
               + ")");
           writeLine(tempStream, line.substring(0, line.indexOf("(") + 1)
-              + buildParameters(parameters, fileName, lineNumber) + ");");
+              + buildParameters(parameters, fileName, lineNumber) + line.substring(line.indexOf(")")));
           continue;
         }
 
@@ -240,6 +248,9 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       if (i > 0) {
         result.append(", ");
       }
+      if(parameter.annotation != null && !parameter.annotation.isEmpty()) {
+        result.append(parameter.annotation + " ");
+      }
       if (parameter.isSimpleType()) {
         result.append("@RequestParam(value=\"" + parameter.name + "\") " + parameter.type + " " + parameter.name);
       } else if (parameter.isStringType()) {
@@ -263,52 +274,36 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       if (name.isEmpty()) {
         return new Parameter[0];
       }
-      String[] pairs = methodParametersTokens(name);
-      if (pairs.length % 2 != 0) {
-        LOGGER.error("wrong method detected " + fileName + " " + lineNumber);
-        return null;
-      }
-      Parameter[] result = new Parameter[pairs.length / 2];
-      for (int i = 0; i < pairs.length; i = i + 2) {
-        result[i / 2] = new Parameter(pairs[i].trim(), pairs[i + 1].trim());
-      }
-      return result;
+      name = name.replaceAll("\\s+", " ");
+      return methodParametersTokens(name, fileName, lineNumber);
     }
     LOGGER.error("wrong method detected " + fileName + " " + lineNumber);
     return null;
   }
 
-  public static String[] methodParametersTokens(String line) {
-    List<String> tokens = new ArrayList<>();
-    StringBuilder token = new StringBuilder();
-    line = line.trim();
-    char[] chars = line.toCharArray();
-    int genericBegin = 0;
-    for (char c : chars) {
-      if (c == '<') {
-        genericBegin++;
-      }
-      if (c == '>') {
-        genericBegin--;
-      }
-      if (genericBegin > 0) {
-        token.append(c);
-      } else {
-        if (c == ' ' || c == ',' || c == '\r' || c == '\t') {
-          if (token.length() > 0) {
-            tokens.add(token.toString());
-            token.setLength(0);
-          }
+  public static Parameter[] methodParametersTokens(String line, String fileName, int lineNumber) {
+    List<Parameter> parameters = new ArrayList<>();
+    Matcher param = PATTERN_METHOD_PARAMETER_DEF.matcher(line);
+    while (param.find()) {
+      String paramDef = param.group();
+      Matcher paramDefMatcher = PATTERN_METHOD_PARAMETER_TYPE_NAME.matcher(paramDef);
+      if (paramDefMatcher.find()) {
+        String typeAndName = paramDefMatcher.group();
+        Matcher nameMatcher = PATTERN_METHOD_PARAMETER_NAME.matcher(typeAndName);
+        if (nameMatcher.find()) {
+          String name = nameMatcher.group();
+          String annotation = paramDef.substring(0, paramDef.indexOf(typeAndName)).trim();
+          String type = typeAndName.substring(0, typeAndName.indexOf(name)).trim();
+          name = name.trim();
+          parameters.add(new Parameter(annotation, type, name));
         } else {
-          token.append(c);
+          LOGGER.error("wrong method detected " + fileName + " " + lineNumber);
         }
+      } else {
+        LOGGER.error("wrong method detected " + fileName + " " + lineNumber);
       }
     }
-    if (token.length() > 0) {
-      tokens.add(token.toString());
-      token.setLength(0);
-    }
-    return tokens.toArray(new String[0]);
+    return parameters.toArray(new Parameter[0]);
   }
 
   public static String methodName(String line, String previousLine, String fileName, int lineNumber) {

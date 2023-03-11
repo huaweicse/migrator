@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
+@org.springframework.context.annotation.Lazy
 @RequestMapping("/hSFInterfaceService")
 public class HSFInterfaceServiceImpl implements HSFInterfaceService {
 

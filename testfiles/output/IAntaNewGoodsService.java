@@ -28,6 +28,7 @@ public interface IAntaNewGoodsService {
 	 * @return
 	 */
     @ResponseBody
-	                                                    @NotNull List<String> filedCodeList);
+    @PostMapping(value = "/queryGoodsExtByFiledCodes", produces = "x-application/hessian2", consumes = "x-application/hessian2")
+	List<Map<String, Object>> queryGoodsExtByFiledCodes(@RequestHeader(value="token") String token, @NotNull @RequestParam(value="goodsId") Long goodsId, @RequestParam(value="areaId") Long areaId, @NotNull @RequestBody List<String> filedCodeList);
 
 }

@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Parameter {
+  public String annotation;
+
   public String type;
 
   public String name;
@@ -14,7 +16,8 @@ public class Parameter {
           "Date",
           "AdapterType", "OmsType", "E3Type", "LogisticsType", "WmsType", "TaxType", "TmsType", "ILOType"); // enums
 
-  public Parameter(String type, String name) {
+  public Parameter(String annotation, String type, String name) {
+    this.annotation = annotation;
     this.type = type;
     this.name = name;
   }
