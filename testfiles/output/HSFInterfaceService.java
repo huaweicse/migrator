@@ -56,4 +56,8 @@ public interface HSFInterfaceService {
     @ResponseBody
     @PostMapping(value = "/manyBody", produces = "x-application/hessian2", consumes = "x-application/hessian2")
   ResultBody manyBody(@RequestBody BodyOne bodyOne, @RequestBody BodyTwo bodyTwo, @RequestParam(value="count") Long count, @RequestParam(value="num") Double num);
+
+    @ResponseBody
+    @PostMapping(value = "/importBatchData", produces = "x-application/hessian2", consumes = "x-application/hessian2")
+  ServiceResult importBatchData(@RequestHeader(value="token") String token, @RequestHeader(value="orderId") String orderId, @RequestBody Map<String, List<String[]>> dataMap);
 }

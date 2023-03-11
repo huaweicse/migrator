@@ -30,4 +30,6 @@ public interface HSFInterfaceService {
 
   // 该情况下打印error日志，稍后手动进行参数重构
   ResultBody manyBody(BodyOne bodyOne, BodyTwo bodyTwo, Long count, Double num);
+
+  ServiceResult importBatchData(String token, String orderId, Map<String, List<String[]>> dataMap);
 }

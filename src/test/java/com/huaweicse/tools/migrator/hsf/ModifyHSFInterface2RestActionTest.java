@@ -68,5 +68,8 @@ public class ModifyHSFInterface2RestActionTest {
     fileName = "IWorkflowService.java";
     Utils.assertFileContentEquals(localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
         tempBaseFilePath + fileSeparator + fileName);
+    fileName = "IAllotApplyBillService.java";
+    Utils.assertFileContentEquals(localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+        tempBaseFilePath + fileSeparator + fileName);
   }
 }

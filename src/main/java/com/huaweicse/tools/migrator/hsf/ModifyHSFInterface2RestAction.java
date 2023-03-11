@@ -18,7 +18,6 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
@@ -49,9 +48,10 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   private static final Pattern PATTERN_METHOD_PARAMETERS = Pattern.compile("\\(.*\\)");
 
   private static final Pattern PATTERN_METHOD_PARAMETER_DEF = Pattern.compile(
-      "(@\\w+)*\\s*(([\\w.\\[\\]]+)|([\\w.\\[\\]]+<[^>]*>)) [\\w]+\\s*(,|$)");
+      "(@\\w+)*\\s*(([\\w.\\[\\]]+)|([\\w.\\[\\]]+<[^>]*>)|([\\w.\\[\\]]+<[^<]*<[^<]*>>)) [\\w]+\\s*(,|$)");
 
-  private static final Pattern PATTERN_METHOD_PARAMETER_TYPE_NAME = Pattern.compile("(^| )(([\\w.\\[\\]]+)|([\\w.\\[\\]]+<.*>)) [\\w]+");
+  private static final Pattern PATTERN_METHOD_PARAMETER_TYPE_NAME = Pattern.compile(
+      "(([\\w.\\[\\]]+)|([\\w.\\[\\]]+<[^>]*>)|([\\w.\\[\\]]+<[^<]*<[^<]*>>)) [\\w]+\\s*(,|$)");
 
   private static final Pattern PATTERN_METHOD_PARAMETER_NAME = Pattern.compile(" [\\w]+$");
 
@@ -248,7 +248,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       if (i > 0) {
         result.append(", ");
       }
-      if(parameter.annotation != null && !parameter.annotation.isEmpty()) {
+      if (parameter.annotation != null && !parameter.annotation.isEmpty()) {
         result.append(parameter.annotation + " ");
       }
       if (parameter.isSimpleType()) {
@@ -289,11 +289,14 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       Matcher paramDefMatcher = PATTERN_METHOD_PARAMETER_TYPE_NAME.matcher(paramDef);
       if (paramDefMatcher.find()) {
         String typeAndName = paramDefMatcher.group();
+        if (typeAndName.endsWith(",")) {
+          typeAndName = typeAndName.substring(0, typeAndName.length() - 1);
+        }
         Matcher nameMatcher = PATTERN_METHOD_PARAMETER_NAME.matcher(typeAndName);
         if (nameMatcher.find()) {
           String name = nameMatcher.group();
-          String annotation = paramDef.substring(0, paramDef.indexOf(typeAndName)).trim();
-          String type = typeAndName.substring(0, typeAndName.indexOf(name)).trim();
+          String annotation = paramDef.substring(0, paramDef.lastIndexOf(typeAndName)).trim();
+          String type = typeAndName.substring(0, typeAndName.lastIndexOf(name)).trim();
           name = name.trim();
           parameters.add(new Parameter(annotation, type, name));
         } else {
