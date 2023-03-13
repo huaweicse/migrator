@@ -277,11 +277,11 @@ public class ModifyHSFInterface2RestAction extends FileAction {
         result.append(parameter.annotation + " ");
       }
       if (parameter.isSimpleType()) {
-        result.append("@RequestParam(value=\"" + parameter.name + "\") " + parameter.type + " " + parameter.name);
+        result.append("@RequestParam(required = false, value=\"" + parameter.name + "\") " + parameter.type + " " + parameter.name);
       } else if (parameter.isStringType()) {
-        result.append("@RequestHeader(value=\"" + parameter.name + "\") " + parameter.type + " " + parameter.name);
+        result.append("@RequestHeader(required = false, value=\"" + parameter.name + "\") " + parameter.type + " " + parameter.name);
       } else {
-        result.append("@RequestBody " + parameter.type + " " + parameter.name);
+        result.append("@RequestBody(required = false) " + parameter.type + " " + parameter.name);
         bodyCount++;
       }
     }
