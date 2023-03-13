@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface HSFInterfaceService {
 
     @ResponseBody
+    @PostMapping(value = "/synVipsGoodsStock", produces = "x-application/hessian2", consumes = "x-application/hessian2")
+  public ServiceResult synVipsGoodsStock(@RequestHeader(value="token") String token, @RequestBody Map<String,List<Map<String,Object>>> tempMap);
+
+    @ResponseBody
     @PostMapping(value = "/selectReturnWarehouseByInfo", produces = "x-application/hessian2", consumes = "x-application/hessian2")
   List<CusShopReturnWarehouseModel> selectReturnWarehouseByInfo(@RequestHeader(value="shopBrandCode") String shopBrandCode, @RequestHeader(value="channelCode") String channelCode, @RequestParam(value="warehouseType") Integer warehouseType, @RequestParam(value="channelType") Integer channelType, @RequestHeader(value="shopCode") String shopCode);
 

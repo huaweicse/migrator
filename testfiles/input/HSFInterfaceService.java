@@ -3,6 +3,8 @@ package com.huaweicse.tools.migrator;
 
 public interface HSFInterfaceService {
 
+  public ServiceResult synVipsGoodsStock(String token, Map<String,List<Map<String,Object>>> tempMap);
+
   List<CusShopReturnWarehouseModel> selectReturnWarehouseByInfo(String shopBrandCode, String channelCode
       , Integer warehouseType,Integer channelType, String shopCode);
 

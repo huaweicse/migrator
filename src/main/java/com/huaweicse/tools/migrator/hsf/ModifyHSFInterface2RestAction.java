@@ -48,10 +48,19 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   private static final Pattern PATTERN_METHOD_PARAMETERS = Pattern.compile("\\(.*\\)");
 
   private static final Pattern PATTERN_METHOD_PARAMETER_DEF = Pattern.compile(
-      "(@\\w+)*\\s*(([\\w.\\[\\]]+)|([\\w.\\[\\]]+<[^>]*>)|([\\w.\\[\\]]+<[^<]*<[^<]*>>)) [\\w]+\\s*(,|$)");
+      "(@\\w+)*\\s*"
+          + "(([\\w.\\[\\]]+)|"
+          + "([\\w.\\[\\]]+<[^>]*>)|"
+          + "([\\w.\\[\\]]+<[^<]*<[^<]*>>)|"
+          + "([\\w.\\[\\]]+<[^<]*<[^<]*<[^<]*>>>))"
+          + " [\\w]+\\s*(,|$)");
 
   private static final Pattern PATTERN_METHOD_PARAMETER_TYPE_NAME = Pattern.compile(
-      "(([\\w.\\[\\]]+)|([\\w.\\[\\]]+<[^>]*>)|([\\w.\\[\\]]+<[^<]*<[^<]*>>)) [\\w]+\\s*(,|$)");
+      "(([\\w.\\[\\]]+)|"
+          + "([\\w.\\[\\]]+<[^>]*>)|"
+          + "([\\w.\\[\\]]+<[^<]*<[^<]*>>)|"
+          + "([\\w.\\[\\]]+<[^<]*<[^<]*<[^<]*>>>))"
+          + " [\\w]+\\s*(,|$)");
 
   private static final Pattern PATTERN_METHOD_PARAMETER_NAME = Pattern.compile(" [\\w]+$");
 
@@ -68,7 +77,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       "IWareHouseService.java", "IExtendAttributeService.java", "ILoginService.java", "ISystemParameterComService.java",
       "ISupStrategyRelationshipService.java", "ISupStrategyService.java",
       // goods
-      "IGoodsService.java",
+      "IGoodsService.java", "IE3AttributeTemplateService.java",
       // stock
       "IOneE3BaseService.java", "IE3BaseEndpointService.java"
   );
@@ -135,6 +144,16 @@ public class ModifyHSFInterface2RestAction extends FileAction {
           writeLine(tempStream, line);
           continue;
         }
+        if(line.contains("//tool ignore")) {
+          notesBegin = true;
+          writeLine(tempStream, line);
+          continue;
+        }
+        if(line.contains("//end tool ignore")) {
+          notesBegin = false;
+          writeLine(tempStream, line);
+          continue;
+        }
         // 行注释
         if (line.trim().startsWith("//")) {
           writeLine(tempStream, line);
@@ -178,6 +197,10 @@ public class ModifyHSFInterface2RestAction extends FileAction {
           } else {
             LOGGER.error("invalid interface detected {}", fileName, lineNumber);
           }
+        }
+
+        if(line.matches(".*\\(.*\\(.*")) {
+          LOGGER.error("need check this method and can not process, {} {}", fileName, lineNumber);
         }
 
         if (isMethod(line)) {
