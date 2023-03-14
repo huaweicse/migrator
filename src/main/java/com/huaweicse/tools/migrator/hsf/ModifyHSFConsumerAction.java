@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
 
 /**
@@ -28,6 +27,14 @@ import com.huaweicse.tools.migrator.common.FileAction;
 public class ModifyHSFConsumerAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFConsumerAction.class);
+
+  private static final Pattern CLASS_DEF = Pattern.compile("\\s*class\\s+[\\w]+");
+
+  private static final Pattern CLASS_DEF_NAME = Pattern.compile("\\s+[\\w]+$");
+
+  private static final Pattern INTERFACE_DEF = Pattern.compile("[\\w]+\\s+[\\w]+\\s*;\\s*$");
+
+  private static final Pattern INTERFACE_DEF_CLASS = Pattern.compile("[\\w]+");
 
   private static final String HSF_CONSUMER = "@HSFConsumer";
 
@@ -63,6 +70,16 @@ public class ModifyHSFConsumerAction extends FileAction {
             writeLine(tempStream, line);
             continue;
           }
+          if (line.contains("//tool ignore")) {
+            notesBegin = true;
+            writeLine(tempStream, line);
+            continue;
+          }
+          if (line.contains("//end tool ignore")) {
+            notesBegin = false;
+            writeLine(tempStream, line);
+            continue;
+          }
           // 行注释
           if (line.trim().startsWith("//")) {
             writeLine(tempStream, line);
@@ -84,42 +101,53 @@ public class ModifyHSFConsumerAction extends FileAction {
             continue;
           }
 
-          if (line.contains("import")) {
-            line = line.replace(Const.HSF_CONSUMER_PACKAGE_NAME, Const.FEIGN_CLIENT_PACKAGE_NAME);
+          if (line.startsWith("package ")) {
             writeLine(tempStream, line);
+            writeLine(tempStream, "");
+            writeLine(tempStream, "import org.springframework.cloud.openfeign.FeignClient;");
             continue;
           }
 
-          if (line.contains(" class ")) {
-            className = line.substring(line.indexOf(" class ") + 7, line.indexOf("{")).trim();
-            writeLine(tempStream, line);
+          if (line.contains("com.alibaba.boot.hsf.annotation")) {
             continue;
+          }
+
+          Matcher classDefMatcher = CLASS_DEF.matcher(line);
+          if (classDefMatcher.find()) {
+            Matcher classNameMatcher = CLASS_DEF_NAME.matcher(classDefMatcher.group());
+            if (classNameMatcher.find()) {
+              className = classNameMatcher.group().trim();
+              writeLine(tempStream, line);
+              continue;
+            }
+            throw new IllegalStateException("can not process class def " + i + " " + file.getAbsolutePath());
           }
 
           // 处理@HSFConsumer注解信息及接口信息
           if (line.contains(HSF_CONSUMER)) {
             String nextLine = lines.get(i + 1);
-            String[] interfaceLine = nextLine.trim().split(" ");
-            if (interfaceLine.length < 3) {
+            Matcher interfaceDefMatcher = INTERFACE_DEF.matcher(nextLine);
+            if (interfaceDefMatcher.find()) {
+              Matcher nameMather = INTERFACE_DEF_CLASS.matcher(interfaceDefMatcher.group());
+              if (nameMather.find()) {
+                String interfaceName = nameMather.group();
+                String feignClientInfo = feignClientInfo(line, interfaceName, className);
+                if (feignClientInfo != null) {
+                  line = line.replace(line.trim(), feignClientInfo);
+                  writeLine(tempStream, line);
+                  writeLine(tempStream, "  " + interfaceExtension(interfaceName));
+                  i++;
+                } else {
+                  LOGGER.error(ERROR_MESSAGE,
+                      "Interface declaration missing serviceGroup and interfaceName.",
+                      file.getAbsolutePath(), i);
+                  writeLine(tempStream, line);
+                }
+              }
+            } else {
               LOGGER.error(ERROR_MESSAGE,
                   "Interface definition not valid under @HSFConsumer annotation.",
                   file.getAbsolutePath(), i);
-              writeLine(tempStream, line);
-            } else {
-              String interfaceName = interfaceLine[1];
-              String feignClientInfo = feignClientInfo(line, interfaceName, className);
-              if (feignClientInfo != null) {
-                line = line.replace(line.trim(), feignClientInfo);
-                nextLine = nextLine.replace(nextLine.trim(), interfaceExtension(nextLine));
-                writeLine(tempStream, line);
-                writeLine(tempStream, nextLine);
-                i++;
-              } else {
-                LOGGER.error(ERROR_MESSAGE,
-                    "Interface declaration missing serviceGroup and interfaceName.",
-                    file.getAbsolutePath(), i);
-                writeLine(tempStream, line);
-              }
             }
             continue;
           }
@@ -160,13 +188,12 @@ public class ModifyHSFConsumerAction extends FileAction {
   }
 
   // 接口拓展信息
-  private String interfaceExtension(String line) {
+  private String interfaceExtension(String interfaceName) {
     StringBuilder stringBuilder = new StringBuilder();
-    String[] s = line.trim().split(" ");
     stringBuilder.append("public interface ")
-        .append(s[1])
+        .append(interfaceName)
         .append("Ext extends ")
-        .append(s[1])
+        .append(interfaceName)
         .append("{}");
     return new String(stringBuilder);
   }

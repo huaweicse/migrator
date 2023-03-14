@@ -34,4 +34,11 @@ public class GoodsServiceHsfConfig {
 	@HSFConsumer
 	private IMwPlatformGoodsService mwPlatformGoodsService;
 
+	@HSFConsumer
+	IODSShopRefusalRecordService odsShopRefusalRecordService;
+	@HSFConsumer(methodSpecials = @HSFConsumer.ConsumerMethodSpecial(methodName = "queryPageByAds", clientTimeout =
+			"90000"))
+	private IRetailOrderBillService retailOrderBillService;
+	@HSFConsumer
+	private IAceSapService aceSapService;
 }

@@ -56,31 +56,15 @@ public class ModifyHSFConsumerActionTest {
     String fileName = "HSFConsumerStandardConfig.java";
     Utils.assertFileContentEquals(genFilePath(TEMP_DIR_PATH, "input", fileName),
         genFilePath(localFileBasePath, "output", fileName));
-  }
 
-  // 非规范开发风格文件测试
-  @Test
-  public void testModifyHSFConsumerActionNonstandardConfig() throws Exception {
-    localFileBasePath = BASE_PATH + fileSeparator + "testfiles";
-    FileUtils.copyDirectoryToDirectory(new File(localFileBasePath + fileSeparator + "input"),
-        new File(TEMP_DIR_PATH));
-    modifyHSFConsumerAction.run(TEMP_DIR_PATH + fileSeparator + "input");
-
-    String fileName = "HSFConsumerNonstandardConfig.java";
+    fileName = "HSFConsumerNonstandardConfig.java";
     Utils.assertFileContentEquals(genFilePath(TEMP_DIR_PATH, "input", fileName),
         genFilePath(localFileBasePath, "output", fileName));
-  }
 
-  @Test
-  public void testModifyAntaConfig() throws Exception {
-    localFileBasePath = BASE_PATH + fileSeparator + "testfiles";
-    FileUtils.copyDirectoryToDirectory(new File(localFileBasePath + fileSeparator + "input"),
-        new File(TEMP_DIR_PATH));
-    modifyHSFConsumerAction.run(TEMP_DIR_PATH + fileSeparator + "input");
-
-    String fileName = "GoodsServiceHsfConfig.java";
+    fileName = "GoodsServiceHsfConfig.java";
     Utils.assertFileContentEquals(genFilePath(TEMP_DIR_PATH, "input", fileName),
         genFilePath(localFileBasePath, "output", fileName));
+
     fileName = "GoodsHsfConfig.java";
     Utils.assertFileContentEquals(genFilePath(TEMP_DIR_PATH, "input", fileName),
         genFilePath(localFileBasePath, "output", fileName));

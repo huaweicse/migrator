@@ -1,6 +1,7 @@
 package com.baison.e3.middleware.report.config;
 
 import org.springframework.cloud.openfeign.FeignClient;
+
 import com.baison.e3.middleware.goods.service.ISingleProductService;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,5 +13,5 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class GoodsHsfConfig {
 	@FeignClient(name = "${feign.client.GoodsHsfConfig}", contextId = "iSingleProductService", path = "/iSingleProductService")
-	public interface ISingleProductServiceExt extends ISingleProductService{}
+  public interface ISingleProductServiceExt extends ISingleProductService{}
 }

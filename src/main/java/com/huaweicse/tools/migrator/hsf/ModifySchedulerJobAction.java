@@ -22,13 +22,29 @@ import com.huaweicse.tools.migrator.common.FileAction;
  */
 @Component
 public class ModifySchedulerJobAction extends FileAction {
-  private static final String SCHEDULER_JOB_CLASS = "com.alibaba.schedulerx.worker.processor.JavaProcessor";
+  private static final String SCHEDULER_JOB_CLASS =
+      "com.alibaba.schedulerx.worker.processor.JavaProcessor";
+
+  private static final String SCHEDULER_JOB_CLASS2 =
+      "import com.alibaba.schedulerx.worker.processor.MapJobProcessor";
 
   private static final Pattern CLASS_DEF = Pattern.compile(
-      "class [a-zA-Z]+[a-zA-Z0-9]* extends JavaProcessor");
+      "class[\\s]+[\\w]+[\\s]+extends[\\s]+JavaProcessor");
+
+  private static final Pattern CLASS_DEF2 = Pattern.compile(
+      "class[\\s]+[\\w]+[\\s]+extends[\\s]+MapJobProcessor");
+
+  private static final Pattern CLASS_DEF_NAME = Pattern.compile(
+      "class[\\s]+[\\w]+");
+
+  private static final Pattern CLASS_DEF_EXTENDS = Pattern.compile(
+      "extends[\\s]+JavaProcessor");
+
+  private static final Pattern CLASS_DEF_EXTENDS2 = Pattern.compile(
+      "extends[\\s]+MapJobProcessor");
 
   private static final Pattern METHOD_DEF = Pattern.compile(
-      "ProcessResult process\\(JobContext [a-zA-Z0-9]+\\)");
+      "ProcessResult[\\s]+process[\\s]*\\(JobContext.+\\)");
 
   @Override
   public void run(String... args) throws Exception {
@@ -46,13 +62,23 @@ public class ModifySchedulerJobAction extends FileAction {
           writeLine(tempStream, line);
           continue;
         }
+        if (line.contains("//tool ignore")) {
+          notesBegin = true;
+          writeLine(tempStream, line);
+          continue;
+        }
+        if (line.contains("//end tool ignore")) {
+          notesBegin = false;
+          writeLine(tempStream, line);
+          continue;
+        }
         // 行注释
         if (line.trim().startsWith("//")) {
           writeLine(tempStream, line);
           continue;
         }
         // 文本注释
-        if (line.trim().startsWith("*/")) {
+        if (line.trim().contains("*/")) {
           notesBegin = false;
           writeLine(tempStream, line);
           continue;
@@ -61,7 +87,7 @@ public class ModifySchedulerJobAction extends FileAction {
           writeLine(tempStream, line);
           continue;
         }
-        if (line.trim().startsWith("/**")) {
+        if (line.trim().contains("/**")) {
           notesBegin = true;
           writeLine(tempStream, line);
           continue;
@@ -84,9 +110,13 @@ public class ModifySchedulerJobAction extends FileAction {
         // 类定义
         Matcher classMatcher = CLASS_DEF.matcher(line);
         if (classMatcher.find()) {
-          String classDef = classMatcher.group();
-          className = classDef.substring(classDef.indexOf("class ") + 6, classDef.indexOf("extends JavaProcessor") - 1);
-          writeLine(tempStream, line.replace("extends JavaProcessor", ""));
+          className = writeAndGetClassName(CLASS_DEF_EXTENDS, file, lineNumber, tempStream, line, classMatcher);
+          continue;
+        }
+
+        classMatcher = CLASS_DEF2.matcher(line);
+        if (classMatcher.find()) {
+          className = writeAndGetClassName(CLASS_DEF_EXTENDS2, file, lineNumber, tempStream, line, classMatcher);
           continue;
         }
 
@@ -107,8 +137,19 @@ public class ModifySchedulerJobAction extends FileAction {
           }
         }
 
+        if (line.contains("return new ProcessResult(false);")) {
+          writeLine(tempStream, line.replace("return new ProcessResult(false);", "return ReturnT.FAIL;"));
+          continue;
+        }
+
         if (line.contains("return new ProcessResult(true);")) {
           writeLine(tempStream, line.replace("return new ProcessResult(true);", "return ReturnT.SUCCESS;"));
+          continue;
+        }
+
+        if (line.contains("return new ProcessResult(result);")) {
+          writeLine(tempStream, line.replace("return new ProcessResult(result);",
+              "return result ? ReturnT.SUCCESS : ReturnT.FAIL;"));
           continue;
         }
 
@@ -127,8 +168,21 @@ public class ModifySchedulerJobAction extends FileAction {
     }
   }
 
-  private boolean isClassDef(String line) {
-    return CLASS_DEF.matcher(line).matches();
+  private String writeAndGetClassName(Pattern extendMatcher, File file, int lineNumber, CharArrayWriter tempStream, String line,
+      Matcher classMatcher)
+      throws IOException {
+    String className;
+    String classDef = classMatcher.group();
+    Matcher classDefNameMatcher = CLASS_DEF_NAME.matcher(classDef);
+    Matcher classDefExtendsMatcher = extendMatcher.matcher(classDef);
+    if (classDefNameMatcher.find() && classDefExtendsMatcher.find()) {
+      className = classDefNameMatcher.group();
+      className = className.substring("class ".length());
+      String classExtends = classDefExtendsMatcher.group();
+      writeLine(tempStream, line.replace(classExtends, ""));
+      return className;
+    }
+    throw new IllegalStateException("wrong job file." + lineNumber + " " + file.getAbsolutePath());
   }
 
   @Override
@@ -136,6 +190,6 @@ public class ModifySchedulerJobAction extends FileAction {
     if (!file.getName().endsWith(".java")) {
       return false;
     }
-    return fileContains(file, SCHEDULER_JOB_CLASS);
+    return fileContains(file, SCHEDULER_JOB_CLASS) || fileContains(file, SCHEDULER_JOB_CLASS2);
   }
 }

@@ -49,5 +49,20 @@ public class ModifySchedulerJobActionTest {
     Utils.assertFileContentEquals(
         localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
         tempBaseFilePath + fileSeparator + fileName);
+
+    fileName = "RetailAntaIL802Job.java";
+    Utils.assertFileContentEquals(
+        localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+        tempBaseFilePath + fileSeparator + fileName);
+
+    fileName = "DtcZyRetailSendJob.java";
+    Utils.assertFileContentEquals(
+        localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+        tempBaseFilePath + fileSeparator + fileName);
+
+    fileName = "CrmOuidJob.java";
+    Utils.assertFileContentEquals(
+        localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+        tempBaseFilePath + fileSeparator + fileName);
   }
 }

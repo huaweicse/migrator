@@ -4,6 +4,7 @@ package com.huaweicse.tools.migrator;
 
 import org.springframework.cloud.openfeign.FeignClient;
 
+
 import org.springframework.context.annotation.Configuration;
 
 
