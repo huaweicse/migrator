@@ -31,7 +31,6 @@ public class CrmOuidJob  {
     public ReturnT<String> doJob(String jobParameters) {
         String taskName = context.getTaskName();
         Object task = context.getTask();
-        String jobParameters = context.getJobParameters();
         Map<String, String> jobParamMap = new HashMap<>();
         if (StringUtils.isNotBlank(jobParameters)) {
             jobParamMap = JSONUtil.parseObject(jobParameters, HashMap.class);

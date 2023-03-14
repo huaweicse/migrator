@@ -64,5 +64,10 @@ public class ModifySchedulerJobActionTest {
     Utils.assertFileContentEquals(
         localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
         tempBaseFilePath + fileSeparator + fileName);
+
+    fileName = "MultipleWarehouseOrderOverdueWarningJob.java";
+    Utils.assertFileContentEquals(
+        localBaseFilePath + fileSeparator + "output" + fileSeparator + fileName,
+        tempBaseFilePath + fileSeparator + fileName);
   }
 }

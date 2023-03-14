@@ -159,6 +159,11 @@ public class ModifySchedulerJobAction extends FileAction {
           continue;
         }
 
+        if (line.contains("String jobParameters = context.getJobParameters();")
+         || line.contains("String jobParameters = jobContext.getJobParameters();")) {
+          continue;
+        }
+
         writeLine(tempStream, line);
       }
 
@@ -168,7 +173,8 @@ public class ModifySchedulerJobAction extends FileAction {
     }
   }
 
-  private String writeAndGetClassName(Pattern extendMatcher, File file, int lineNumber, CharArrayWriter tempStream, String line,
+  private String writeAndGetClassName(Pattern extendMatcher, File file, int lineNumber, CharArrayWriter tempStream,
+      String line,
       Matcher classMatcher)
       throws IOException {
     String className;

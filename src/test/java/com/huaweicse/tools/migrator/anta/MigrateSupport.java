@@ -23,7 +23,8 @@ public class MigrateSupport {
   @BeforeEach
   public void setUp() throws Exception {
 //    TEMP_DIR_PATH = "D:\\anta\\temp";
-    BASE_PATH = "D:\\anta\\anta_mw_distribute_app";
+    BASE_PATH = "D:\\anta\\anta_mw_operate_app";
+//    BASE_PATH = "D:\\anta\\anta_mw_distribute_app";
 //    BASE_PATH = "D:\\anta\\anta_mw_retail_app";
 //    BASE_PATH = "D:\\anta\\anta_mw_customer";
 //    BASE_PATH = "D:\\anta\\anta_mw_customers";
