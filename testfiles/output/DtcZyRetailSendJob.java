@@ -27,7 +27,7 @@ public class DtcZyRetailSendJob  {
 	private static final Logger logger = LoggerFactory.getLogger(DtcZyRetailSendJob.class);
 
     @XxlJob("DtcZyRetailSendJob")
-	public ReturnT<String> doJob(String param) {
+	public ReturnT<String> doJob(String jobParameters) {
 		boolean result;
 		try {
 			logger.info("job-run: DTC直营数据推送 进入job");

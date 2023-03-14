@@ -21,7 +21,7 @@ public class RetailAntaIL802Job  {
     private IBaseJobService baseJobService;
 
     @XxlJob("RetailAntaIL802Job")
-    public ReturnT<String> doJob(String param) {
+    public ReturnT<String> doJob(String jobParameters) {
         boolean result = baseJobService.process(null);
         return result ? ReturnT.SUCCESS : ReturnT.FAIL;
     }

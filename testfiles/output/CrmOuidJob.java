@@ -28,7 +28,7 @@ public class CrmOuidJob  {
     private CrmOuidJobService crmOuidJobService;
 
     @XxlJob("CrmOuidJob")
-    public ReturnT<String> doJob(String param) {
+    public ReturnT<String> doJob(String jobParameters) {
         String taskName = context.getTaskName();
         Object task = context.getTask();
         String jobParameters = context.getJobParameters();

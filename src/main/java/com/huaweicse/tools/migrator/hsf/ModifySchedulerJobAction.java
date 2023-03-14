@@ -131,7 +131,7 @@ public class ModifySchedulerJobAction extends FileAction {
             writeLine(tempStream, "    @XxlJob(\"" + className + "\")");
             String methodSign = methodMatcher.group();
             writeLine(tempStream, nextLine.replace(methodSign,
-                "ReturnT<String> doJob(String param)"));
+                "ReturnT<String> doJob(String jobParameters)"));
             lineNumber++;
             continue;
           }

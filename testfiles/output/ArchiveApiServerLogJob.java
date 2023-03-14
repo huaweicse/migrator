@@ -20,7 +20,7 @@ public class ArchiveApiServerLogJob  {
     private IApiServerLogService apiServerLogService;
 
     @XxlJob("ArchiveApiServerLogJob")
-    public ReturnT<String> doJob(String param) throws Exception {
+    public ReturnT<String> doJob(String jobParameters) throws Exception {
         apiServerLogService.renameAndCreateNewTable();
         return ReturnT.SUCCESS;
     }
