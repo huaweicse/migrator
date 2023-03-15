@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import com.huaweicse.tools.migrator.Utils;
-import com.huaweicse.tools.migrator.hsf.ModifyHSFConsumerAction;
 
 @SpringBootTest
 @TestInstance(Lifecycle.PER_CLASS)

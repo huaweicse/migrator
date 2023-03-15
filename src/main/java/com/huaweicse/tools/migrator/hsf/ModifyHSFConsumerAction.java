@@ -135,7 +135,7 @@ public class ModifyHSFConsumerAction extends FileAction {
                 if (feignClientInfo != null) {
                   line = line.replace(line.trim(), feignClientInfo);
                   writeLine(tempStream, line);
-                  writeLine(tempStream, "  " + interfaceExtension(interfaceName));
+                  writeLine(tempStream, "    " + interfaceExtension(interfaceName));
                   i++;
                 } else {
                   LOGGER.error(ERROR_MESSAGE,

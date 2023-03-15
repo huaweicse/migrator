@@ -71,11 +71,14 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   // 无法扫描到的基类
   private static final List<String> ACCEPT_FILES = Arrays.asList(
       // support
-      "ISupportImportAndExport.java",
+      "ISupportImportAndExport.java", "IImportAndExportListener.java",
       "IBaseService.java", "IE3BaseService.java", "ISupportCopyService.java", "IORMService.java",
       "IShopService.java", "IAdministrationAreaService.java", "IChannelService.java", "ISupplierService.java",
       "IWareHouseService.java", "IExtendAttributeService.java", "ILoginService.java", "ISystemParameterComService.java",
       "ISupStrategyRelationshipService.java", "ISupStrategyService.java",
+      "ISapDataQueryService.java",
+      //settlement
+      "ILogisticsCostReconciliateService.java",
       // goods
       "IGoodsService.java", "IE3AttributeTemplateService.java",
       // stock
