@@ -57,9 +57,9 @@ public class MigrateApplication implements CommandLineRunner {
   }
 
   private void printUsage(Map<String, Action> beansOfType) {
-    LOGGER.error("Usage: ");
-    LOGGER.error("java -jar migrator-0.0.1-SNAPSHOT.jar action [options]");
-    LOGGER.error("Available actions: ");
-    beansOfType.forEach((k, v) -> LOGGER.error(v.name()));
+    LOGGER.info("Usage: ");
+    LOGGER.info("java -jar migrator-0.0.1-SNAPSHOT.jar action [options]");
+    LOGGER.info("Available actions: ");
+    beansOfType.forEach((k, v) -> LOGGER.info(v.name()));
   }
 }
