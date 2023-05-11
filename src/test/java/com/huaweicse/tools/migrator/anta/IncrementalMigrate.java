@@ -17,9 +17,9 @@ public class IncrementalMigrate {
 
   @Test
   public void incrementalMigrate() throws Exception {
-    String newTag = "D:\\anta\\anta_mw_support-final";
-    String oldTag = "D:\\anta\\anta_mw_support-master";
-    String diffTag = "D:\\anta\\anta_mw_support-diff";
+    String newTag = "D:\\anta\\anta_mw_core-final";
+    String oldTag = "D:\\anta\\anta_mw_core-master";
+    String diffTag = "D:\\anta\\anta_mw_core-diff";
 
     copyDiffFileAction.run(newTag, oldTag, diffTag);
     modifyHSFAction.run(diffTag);
