@@ -78,7 +78,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       "ISupStrategyRelationshipService.java", "ISupStrategyService.java",
       "ISapDataQueryService.java",
       //settlement
-      "ILogisticsCostReconciliateService.java",
+      "ILogisticsCostReconciliateService.java", "IRetailSettlementService.java",
       // goods
       "IGoodsService.java", "IE3AttributeTemplateService.java",
       // stock
@@ -258,7 +258,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
   private void checkAndLogMultiLines(List<String> lines, String fileName) {
     for (int i = 0; i < lines.size(); i++) {
       String line = lines.get(i);
-      if (line.contains("(") && !line.contains(")")) {
+      if (!line.contains("*") && line.contains("(") && !line.contains(")")) {
         String nextLine = lines.get(i + 1);
         if (nextLine.contains(")") && !nextLine.contains("(")) {
           continue;
