@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
 
 /**
@@ -36,8 +36,25 @@ public class ModifyHSFProviderAction extends FileAction {
 
   @Override
   public void run(String... args) throws Exception {
+    ReadHSFInfoAction action = new ReadHSFInfoAction();
+    action.run(args[0]);
     List<File> acceptedFiles = acceptedFiles(args[0]);
+    acceptedFiles = filterFiles(action.getImplementationNames(), acceptedFiles);
     replaceContent(acceptedFiles);
+  }
+
+  private List<File> filterFiles(List<String> implementationNames, List<File> acceptedFiles) {
+    List<String> names = new ArrayList<>(implementationNames.size());
+    for (String item : implementationNames) {
+      names.add(item.substring(item.lastIndexOf(".") + 1) + ".java");
+    }
+    List<File> result = new ArrayList<>(acceptedFiles.size());
+    for (File file : acceptedFiles) {
+      if (names.contains(file.getName())) {
+        result.add(file);
+      }
+    }
+    return result;
   }
 
   @Override
@@ -45,7 +62,7 @@ public class ModifyHSFProviderAction extends FileAction {
     if (!file.getName().endsWith(".java")) {
       return false;
     }
-    return fileContains(file, HSF_PROVIDER) && !fileContains(file, HSF_PROVIDER_COMMENT);
+    return fileContains(file, " implements ");
   }
 
   private void replaceContent(List<File> acceptedFiles) throws IOException {
@@ -83,47 +100,23 @@ public class ModifyHSFProviderAction extends FileAction {
           continue;
         }
 
-        if (line.contains(Const.HSF_PROVIDER_PACKAGE_NAME)) {
-          line = line.replace(Const.HSF_PROVIDER_PACKAGE_NAME, Const.REQUEST_MAPPING_PACKAGE_NAME);
-          writeLine(tempStream, line);
-          writeLine(tempStream, "import " + Const.REST_CONTROLLER_PACKAGE_NAME + ";");
-          continue;
-        }
-        if (line.trim().startsWith(HSF_PROVIDER)) {
-          Pattern pattern = Pattern.compile(INTERFACE_REGEX_PATTERN);
-          Matcher matcher = pattern.matcher(line);
-          while (matcher.find()) {
-            interfaceName = matcher.group().replace(".class", "");
-          }
-          if (interfaceName == null) {
-            LOGGER.error(ERROR_MESSAGE, "@HSFProvicer not hava interface property.",
-                file.getAbsolutePath(),
-                i);
+        if (line.contains("public class ")) {
+          Pattern pattern = Pattern.compile(" implements\\s+[a-zA-Z]+[a-zA-Z0-9]*");
+          Matcher matcher = pattern.matcher(line + lines.get(i + 1));
+          if (matcher.find()) {
+            interfaceName = matcher.group().substring(" implements ".length()).trim();
+          } else {
+            LOGGER.error("Class do not have interface {}", file);
             continue;
           }
-          writeLine(tempStream, "@RestController");
+          writeLine(tempStream, "@org.springframework.web.bind.annotation.RestController");
           writeLine(tempStream, "@org.springframework.context.annotation.Lazy");
           writeLine(tempStream,
-              "@RequestMapping(\"/" + interfaceName.substring(0, 1).toLowerCase() + interfaceName.substring(1) + "\")");
+              "@org.springframework.web.bind.annotation.RequestMapping(\"/" + interfaceName.substring(0, 1)
+                  .toLowerCase() + interfaceName.substring(1) + "\")");
+          writeLine(tempStream, line);
           continue;
         }
-//        // 注入的 service bean 设置为 Lazy， 避免循环依赖。
-//        if (line.contains("@Autowired") || line.contains("@Resource")) {
-//          String nextLine = lines.get(i + 1);
-//          if (nextLine.contains(" " + interfaceName + " ")) {
-//            writeLine(tempStream, line);
-//            writeLine(tempStream, "    @org.springframework.context.annotation.Lazy");
-//            continue;
-//          }
-//          if(nextLine.contains("@Qualifier")) {
-//            nextLine = lines.get(i + 2);
-//            if (nextLine.contains(" " + interfaceName + " ")) {
-//              writeLine(tempStream, line);
-//              writeLine(tempStream, "    @org.springframework.context.annotation.Lazy");
-//              continue;
-//            }
-//          }
-//        }
         writeLine(tempStream, line);
       }
       OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8);

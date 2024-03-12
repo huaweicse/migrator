@@ -97,23 +97,13 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
   @Override
   protected boolean isAcceptedFile(File file) {
-    return file.getName().endsWith(".java");
+    return file.getName().endsWith(".java") && fileContains(file, " interface ");
   }
 
   private List<String> filterInterfaceFile(List<File> acceptedFiles) throws IOException {
     List<String> interfaceFileList = new ArrayList<>();
     for (File file : acceptedFiles) {
-      List<String> lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
-      for (String line : lines) {
-        if (line.contains(HSF_PROVIDER)) {
-          Pattern pattern = Pattern.compile(INTERFACE_REGEX_PATTERN);
-          Matcher matcher = pattern.matcher(line);
-          while (matcher.find()) {
-            interfaceFileList.add(matcher.group().replace(".class", ".java"));
-          }
-          break;
-        }
-      }
+      interfaceFileList.add(file.getName());
     }
     return interfaceFileList;
   }
@@ -147,12 +137,12 @@ public class ModifyHSFInterface2RestAction extends FileAction {
           writeLine(tempStream, line);
           continue;
         }
-        if(line.contains("//tool ignore")) {
+        if (line.contains("//tool ignore")) {
           notesBegin = true;
           writeLine(tempStream, line);
           continue;
         }
-        if(line.contains("//end tool ignore")) {
+        if (line.contains("//end tool ignore")) {
           notesBegin = false;
           writeLine(tempStream, line);
           continue;
@@ -202,7 +192,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
           }
         }
 
-        if(line.matches(".*\\(.*\\(.*")) {
+        if (line.matches(".*\\(.*\\(.*")) {
           LOGGER.error("need check this method and can not process, {} {}", fileName, lineNumber);
         }
 
@@ -280,9 +270,11 @@ public class ModifyHSFInterface2RestAction extends FileAction {
         result.append(parameter.annotation + " ");
       }
       if (parameter.isSimpleType()) {
-        result.append("@RequestParam(required = false, value=\"" + parameter.name + "\") " + parameter.type + " " + parameter.name);
+        result.append("@RequestParam(required = false, value=\"" + parameter.name + "\") " + parameter.type + " "
+            + parameter.name);
       } else if (parameter.isStringType()) {
-        result.append("@RequestHeader(required = false, value=\"" + parameter.name + "\") " + parameter.type + " " + parameter.name);
+        result.append("@RequestHeader(required = false, value=\"" + parameter.name + "\") " + parameter.type + " "
+            + parameter.name);
       } else {
         result.append("@RequestBody(required = false) " + parameter.type + " " + parameter.name);
         bodyCount++;

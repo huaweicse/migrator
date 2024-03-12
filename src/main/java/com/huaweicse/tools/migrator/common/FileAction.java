@@ -33,8 +33,12 @@ public abstract class FileAction implements Action {
 
   protected abstract boolean isAcceptedFile(File file) throws IOException;
 
-  protected boolean fileContains(File file, String pattern) throws IOException {
-    String content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-    return content.contains(pattern);
+  protected boolean fileContains(File file, String pattern) {
+    try {
+      String content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+      return content.contains(pattern);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

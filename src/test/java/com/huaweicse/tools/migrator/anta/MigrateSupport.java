@@ -6,24 +6,38 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import com.huaweicse.tools.migrator.hsf.GenerateHSFConsumerAction;
 import com.huaweicse.tools.migrator.hsf.ModifyHSFAction;
+import com.huaweicse.tools.migrator.hsf.ModifyHSFInterface2RestAction;
+import com.huaweicse.tools.migrator.hsf.ModifyHSFProviderAction;
+import com.huaweicse.tools.migrator.hsf.ReadHSFInfoAction;
 
 @SpringBootTest
 public class MigrateSupport {
-  private String BASE_PATH;
-
-  private String TEMP_DIR_PATH;
+//  private String BASE_PATH;
+//
+//  private String TEMP_DIR_PATH;
 
   // TODO: generics parameter detection
 
   @Autowired
   private ModifyHSFAction modifyHSFAction;
 
+  @Autowired
+  private ModifyHSFInterface2RestAction modifyHSFInterface2RestAction;
+
+  @Autowired
+  private ModifyHSFProviderAction modifyHSFProviderAction;
+
+  @Autowired
+  private ReadHSFInfoAction readHSFInfoAction;
+
+
   @BeforeEach
   public void setUp() throws Exception {
 //    TEMP_DIR_PATH = "D:\\anta\\temp";
 //    BASE_PATH = "D:\\anta\\anta_mw_finance_app";
-    BASE_PATH = "D:\\anta\\anta_mw_support-diff";
+//    BASE_PATH = "D:\\Projects\\2024-009-青岛港\\user\\user";
 //    BASE_PATH = "D:\\anta\\anta_m w_operate_app";
 //    BASE_PATH = "D:\\anta\\anta_mw_distribute_app-final";
 //    BASE_PATH = "D:\\anta\\anta_mw_retail_app-final";
@@ -57,7 +71,20 @@ public class MigrateSupport {
   }
 
   @Test
+  public void testGenerateHSFConsumerAction() throws Exception {
+    GenerateHSFConsumerAction action = new GenerateHSFConsumerAction();
+    action.run("D:\\Projects\\2024-009-青岛港\\user\\api", "hsf-consumer-user.xml",
+        "com.qdport.v2.user.config", "UserServiceConfiguration");
+  }
+
+  @Test
+  public void testReadHSFInfoAction() throws Exception {
+    readHSFInfoAction.run("D:\\Projects\\2024-009-青岛港\\user\\user");
+  }
+
+  @Test
   public void testModifyHSF() throws Exception {
-    modifyHSFAction.run(BASE_PATH);
+    modifyHSFInterface2RestAction.run("D:\\Projects\\2024-009-青岛港\\user\\user\\user-api");
+    modifyHSFProviderAction.run("D:\\Projects\\2024-009-青岛港\\user\\user\\user-service");
   }
 }
