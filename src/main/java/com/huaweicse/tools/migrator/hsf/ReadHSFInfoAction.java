@@ -10,6 +10,8 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -19,6 +21,8 @@ import com.huaweicse.tools.migrator.common.FileAction;
 
 @Component
 public class ReadHSFInfoAction extends FileAction {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ReadHSFInfoAction.class);
+
   private List<String> interfaceNames = new ArrayList<>();
 
   private List<String> implementationNames = new ArrayList<>();
@@ -50,7 +54,11 @@ public class ReadHSFInfoAction extends FileAction {
       Node node = bookList.item(i);
       Node interfaceName = node.getAttributes().getNamedItem("interface");
       interfaceNames.add(interfaceName.getNodeValue());
-      implementationNames.add(beansNames.get(node.getAttributes().getNamedItem("ref").getNodeValue()));
+      String name = beansNames.get(node.getAttributes().getNamedItem("ref").getNodeValue());
+      if (name == null) {
+        LOGGER.error("ref do not have a bean {}", node.getAttributes().getNamedItem("ref").getNodeValue());
+      }
+      implementationNames.add(name);
       implementationInterfaces.put(beansNames.get(node.getAttributes().getNamedItem("ref").getNodeValue()),
           interfaceName.getNodeValue());
     }

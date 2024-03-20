@@ -66,6 +66,9 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
   private static final Pattern PATTER_INTERFACE = Pattern.compile("public interface.*|interface.*");
 
+  private static final Pattern PATTER_INTERFACE_FILE = Pattern.compile("[^{]+public\\s+interface\\s+.*",
+      Pattern.DOTALL);
+
   private static final Pattern PATTER_INTERFACE_EXTENDS = Pattern.compile("extends\\s+[a-zA-Z]+[a-zA-Z0-9]*");
 
   // 无法扫描到的基类
@@ -97,7 +100,7 @@ public class ModifyHSFInterface2RestAction extends FileAction {
 
   @Override
   protected boolean isAcceptedFile(File file) {
-    return file.getName().endsWith(".java") && fileContains(file, " interface ");
+    return file.getName().endsWith(".java") && fileContains(file, PATTER_INTERFACE_FILE);
   }
 
   private List<String> filterInterfaceFile(List<File> acceptedFiles) throws IOException {

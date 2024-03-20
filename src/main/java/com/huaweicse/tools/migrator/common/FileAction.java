@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 
@@ -37,6 +38,15 @@ public abstract class FileAction implements Action {
     try {
       String content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
       return content.contains(pattern);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected boolean fileContains(File file, Pattern pattern) {
+    try {
+      String content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+      return pattern.matcher(content).matches();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

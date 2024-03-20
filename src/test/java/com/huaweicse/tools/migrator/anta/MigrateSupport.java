@@ -73,8 +73,8 @@ public class MigrateSupport {
   @Test
   public void testGenerateHSFConsumerAction() throws Exception {
     GenerateHSFConsumerAction action = new GenerateHSFConsumerAction();
-    action.run("D:\\Projects\\2024-009-青岛港\\user\\api", "hsf-consumer-user.xml",
-        "com.qdport.v2.user.config", "UserServiceConfiguration");
+    action.run("D:\\Projects\\2024-009-青岛港\\system\\system-view", "spring-consumer.xml",
+        "com.qdport.config", "SystemServiceConfiguration");
   }
 
   @Test
@@ -84,7 +84,7 @@ public class MigrateSupport {
 
   @Test
   public void testModifyHSF() throws Exception {
-    modifyHSFInterface2RestAction.run("D:\\Projects\\2024-009-青岛港\\user\\user\\user-api");
-    modifyHSFProviderAction.run("D:\\Projects\\2024-009-青岛港\\user\\user\\user-service");
+//    modifyHSFInterface2RestAction.run("D:\\Projects\\2024-009-青岛港\\system\\system-api");
+    modifyHSFProviderAction.run("D:\\Projects\\2024-009-青岛港\\system\\system-service");
   }
 }
