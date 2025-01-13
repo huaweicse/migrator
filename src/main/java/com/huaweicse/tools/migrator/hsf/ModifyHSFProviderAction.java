@@ -6,7 +6,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,6 +18,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.huaweicse.tools.migrator.common.Const;
 import com.huaweicse.tools.migrator.common.FileAction;
@@ -28,11 +33,19 @@ public class ModifyHSFProviderAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFProviderAction.class);
 
-  private static final String INTERFACE_REGEX_PATTERN = "[a-zA-Z]+[a-zA-Z0-9]*(.class)";
+  private static final String CLASS_NAME = "[a-zA-Z]+[a-zA-Z0-9]*";
+
+  private static final Pattern INTERFACE_REGEX_PATTERN = Pattern.compile(CLASS_NAME + "(.class)");
 
   private static final String HSF_PROVIDER = "@HSFProvider";
 
   private static final String HSF_PROVIDER_COMMENT = "//@HSFProvider";
+
+  private static final String CLASS_DECLARE_PREFIX = "public class ";
+
+  private static final Pattern CLASS_DECLARE_PATTERN = Pattern.compile(CLASS_DECLARE_PREFIX + CLASS_NAME);
+
+  private final Map<String, Set<String>> controllerPath2Beans = new HashMap<>();
 
   @Override
   public void run(String... args) throws Exception {
@@ -90,21 +103,20 @@ public class ModifyHSFProviderAction extends FileAction {
           continue;
         }
         if (line.trim().startsWith(HSF_PROVIDER)) {
-          Pattern pattern = Pattern.compile(INTERFACE_REGEX_PATTERN);
-          Matcher matcher = pattern.matcher(line);
+          Matcher matcher = INTERFACE_REGEX_PATTERN.matcher(line);
           while (matcher.find()) {
             interfaceName = matcher.group().replace(".class", "");
           }
           if (interfaceName == null) {
-            LOGGER.error(ERROR_MESSAGE, "@HSFProvicer not hava interface property.",
-                file.getAbsolutePath(),
-                i);
-            continue;
+            LOGGER.warn("@HSFProvicer not hava interface property in file [{}] at line {}.", file.getAbsolutePath(), i);
+            interfaceName = getInterfaceNameFromImplClass(lines, file.getAbsolutePath());
+            if (!StringUtils.hasLength(interfaceName)) {
+              continue;
+            }
           }
           writeLine(tempStream, "@org.springframework.web.bind.annotation.RestController");
           writeLine(tempStream, "@org.springframework.context.annotation.Lazy");
-          writeLine(tempStream,
-              "@RequestMapping(\"/" + interfaceName.substring(0, 1).toLowerCase() + interfaceName.substring(1) + "\")");
+          writeLine(tempStream, getRequestMappingAnnotation(interfaceName, file.getAbsolutePath()));
           continue;
         }
 //        // 注入的 service bean 设置为 Lazy， 避免循环依赖。
@@ -130,5 +142,36 @@ public class ModifyHSFProviderAction extends FileAction {
       tempStream.writeTo(fileWriter);
       fileWriter.close();
     }
+  }
+
+  private String getRequestMappingAnnotation(String interfaceName, String filePath) {
+    final StringBuilder requestMappingLine = new StringBuilder("@RequestMapping(\"/");
+    final String path = interfaceName.substring(0, 1).toLowerCase() + interfaceName.substring(1);
+    requestMappingLine.append(path).append("\")");
+    final Set<String> beans = controllerPath2Beans.computeIfAbsent(path, k -> new HashSet<>());
+    beans.add(filePath);
+    if (beans.size() > 1) {
+      LOGGER.error("Controller requestMapping duplicate for path [{}], controllers: {}", path, beans);
+      requestMappingLine.append(" // TODO WARNING: duplicated path.");
+    }
+    return requestMappingLine.toString();
+  }
+
+  private String getInterfaceNameFromImplClass(List<String> lines, String filePath) {
+    final Matcher matcher = lines.stream()
+        .map(CLASS_DECLARE_PATTERN::matcher)
+        .filter(Matcher::find)
+        .findFirst()
+        .orElse(null);
+    if (matcher == null) {
+      LOGGER.error("Class declaration line not found in file [{}].", filePath);
+      return "";
+    }
+    final String className = matcher.group().replace(CLASS_DECLARE_PREFIX, "");
+    LOGGER.info("Recognized class name: {}", className);
+    if (StringUtils.endsWithIgnoreCase(className, "impl")) {
+      return className.substring(0, className.length() - 4);
+    }
+    return className;
   }
 }
