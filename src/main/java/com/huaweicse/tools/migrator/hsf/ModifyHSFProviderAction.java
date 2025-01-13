@@ -7,7 +7,11 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,11 +32,9 @@ public class ModifyHSFProviderAction extends FileAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ModifyHSFProviderAction.class);
 
-  private static final String INTERFACE_REGEX_PATTERN = "[a-zA-Z]+[a-zA-Z0-9]*(.class)";
+  private static final Pattern CLASS_IMPLEMENT_PATTERN = Pattern.compile(" implements\\s+[a-zA-Z]+[a-zA-Z0-9]*");
 
-  private static final String HSF_PROVIDER = "@HSFProvider";
-
-  private static final String HSF_PROVIDER_COMMENT = "//@HSFProvider";
+  private final Map<String, Set<String>> controllerPath2Beans = new HashMap<>();
 
   @Override
   public void run(String... args) throws Exception {
@@ -101,19 +103,16 @@ public class ModifyHSFProviderAction extends FileAction {
         }
 
         if (line.contains("public class ")) {
-          Pattern pattern = Pattern.compile(" implements\\s+[a-zA-Z]+[a-zA-Z0-9]*");
-          Matcher matcher = pattern.matcher(line + lines.get(i + 1));
+          Matcher matcher = CLASS_IMPLEMENT_PATTERN.matcher(line + lines.get(i + 1));
           if (matcher.find()) {
             interfaceName = matcher.group().substring(" implements ".length()).trim();
           } else {
-            LOGGER.error("Class do not have interface {}", file);
+            LOGGER.error("Class do not implement interface {}", file);
             continue;
           }
           writeLine(tempStream, "@org.springframework.web.bind.annotation.RestController");
           writeLine(tempStream, "@org.springframework.context.annotation.Lazy");
-          writeLine(tempStream,
-              "@org.springframework.web.bind.annotation.RequestMapping(\"/" + interfaceName.substring(0, 1)
-                  .toLowerCase() + interfaceName.substring(1) + "\")");
+          writeLine(tempStream, getRequestMappingAnnotation(interfaceName, file.getAbsolutePath()));
           writeLine(tempStream, line);
           continue;
         }
@@ -123,5 +122,19 @@ public class ModifyHSFProviderAction extends FileAction {
       tempStream.writeTo(fileWriter);
       fileWriter.close();
     }
+  }
+
+  private String getRequestMappingAnnotation(String interfaceName, String filePath) {
+    final StringBuilder requestMappingLine = new StringBuilder(
+        "@org.springframework.web.bind.annotation.RequestMapping(\"/");
+    final String path = interfaceName.substring(0, 1).toLowerCase() + interfaceName.substring(1);
+    requestMappingLine.append(path).append("\")");
+    final Set<String> beans = controllerPath2Beans.computeIfAbsent(path, k -> new HashSet<>());
+    beans.add(filePath);
+    if (beans.size() > 1) {
+      LOGGER.error("Controller requestMapping duplicate for path [{}], controllers: {}", path, beans);
+      requestMappingLine.append(" // TODO WARNING: duplicated path.");
+    }
+    return requestMappingLine.toString();
   }
 }
