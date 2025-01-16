@@ -46,7 +46,7 @@ public class ModifyHSFProviderAction extends FileAction {
   }
 
   private List<File> filterFiles(List<String> implementationNames, List<File> acceptedFiles) {
-    List<String> names = new ArrayList<>(implementationNames.size());
+    final Set<String> names = new HashSet<>(implementationNames.size());
     for (String item : implementationNames) {
       names.add(item.substring(item.lastIndexOf(".") + 1) + ".java");
     }

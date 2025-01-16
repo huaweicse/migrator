@@ -62,7 +62,7 @@ public class MigrateSupport {
   @Test
   public void testModifyHSFConsumer() throws Exception {
     GenerateHSFConsumerAction action = new GenerateHSFConsumerAction();
-    action.run("D:\\GitRepos\\QDport\\current\\V1.0\\newlog\\newlog-web", "spring-consumer.xml",
+    action.run("D:\\GitRepos\\QDport\\current\\V1.0\\newlog\\newlog-web",
         "com.qdport.log.config", "NewlogConfiguration");
   }
 }

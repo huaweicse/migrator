@@ -2,43 +2,45 @@ package com.huaweicse.tools.migrator.hsf;
 
 import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import com.huaweicse.tools.migrator.common.FileAction;
 
 @Component
 public class GenerateHSFConsumerAction extends FileAction {
-  private String fileName;
+  private static final Logger LOGGER = LoggerFactory.getLogger(GenerateHSFConsumerAction.class);
 
-  private String packageName;
+  private static final String HSF_CONSUMER_TAG = "hsf:consumer";
 
-  private String className;
+  private final Set<String> consumers = new HashSet<>();
 
   @Override
   public void run(String... args) throws Exception {
-    fileName = args[1];
-    packageName = args[2];
-    className = args[3];
-
-    File config = acceptedFiles(args[0]).get(0);
-    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-
-    DocumentBuilder db = dbf.newDocumentBuilder();
-    Document document = db.parse(config);
-
-    NodeList beanLists = document.getElementsByTagName("hsf:consumer");
+    final String rootPath = args[0];
+    final String packageName = args[1];
+    final String className = args[2];
     CharArrayWriter tempStream = new CharArrayWriter();
 
     writeLine(tempStream, "package " + packageName + ";");
@@ -51,28 +53,60 @@ public class GenerateHSFConsumerAction extends FileAction {
     writeLine(tempStream, "@Configuration");
     writeLine(tempStream, "public class " + className + " {");
 
+    final List<File> files = acceptedFiles(rootPath);
+    for (File config : files) {
+      LOGGER.info("Reading consumer config file {}", config);
+      generateFeignConfig(config, tempStream, className);
+    }
+    writeLine(tempStream, "}");
+
+    writeTargetFile(rootPath, tempStream, packageName, className);
+  }
+
+  private void generateFeignConfig(File config, CharArrayWriter tempStream, String className)
+      throws ParserConfigurationException, IOException, SAXException {
+    final NodeList beanLists = getBeanLists(config);
     for (int i = 0; i < beanLists.getLength(); i++) {
       Node node = beanLists.item(i);
       String interfaceFullName = node.getAttributes().getNamedItem("interface").getNodeValue();
       String interfaceName = interfaceFullName.substring(interfaceFullName.lastIndexOf(".") + 1);
-      String interfaceLowerName = interfaceName.toLowerCase(Locale.ROOT).substring(0, 1) + interfaceName.substring(1);
+      if (!consumers.add(interfaceName)) {
+        LOGGER.warn("Duplicate consumer found in file [{}], for consumer {}", config, interfaceFullName);
+      }
+      String interfaceLowerName = interfaceName.toLowerCase(Locale.ROOT).charAt(0) + interfaceName.substring(1);
       writeLine(tempStream, "    @FeignClient(name = \"${feign.client." + className + "}\",");
       writeLine(tempStream, "        contextId = \"" + interfaceLowerName
           + "\", path = \"" + "/" + interfaceLowerName + "\")");
       writeLine(tempStream, "    public interface " + interfaceName + "Ext extends " + interfaceFullName + "{}");
       writeLine(tempStream, "");
     }
-    writeLine(tempStream, "}");
+  }
 
-    OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(
-        new File(config.getParentFile(), className + ".java")
-    ), StandardCharsets.UTF_8);
-    tempStream.writeTo(fileWriter);
-    fileWriter.close();
+  private NodeList getBeanLists(File config)
+      throws ParserConfigurationException, SAXException, IOException {
+    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+    DocumentBuilder db = dbf.newDocumentBuilder();
+    Document document = db.parse(config);
+
+    return document.getElementsByTagName(HSF_CONSUMER_TAG);
+  }
+
+  private void writeTargetFile(String rootPath, CharArrayWriter tempStream, String packageName, String className)
+      throws IOException {
+    String parentPath = Paths.get(Paths.get(rootPath, "src", "main", "java").normalize().toString(),
+        packageName.split("\\.")).normalize().toString();
+    final File targetFile = new File(parentPath, className + ".java");
+    FileUtils.createParentDirectories(targetFile);
+    try (OutputStreamWriter fileWriter = new OutputStreamWriter(Files.newOutputStream(targetFile.toPath()),
+        StandardCharsets.UTF_8)) {
+      tempStream.writeTo(fileWriter);
+    }
+    tempStream.close();
   }
 
   @Override
   protected boolean isAcceptedFile(File file) throws IOException {
-    return file.getName().equals(fileName);
+    return StringUtils.endsWithIgnoreCase(file.getName(), "xml") && fileContains(file, HSF_CONSUMER_TAG);
   }
 }

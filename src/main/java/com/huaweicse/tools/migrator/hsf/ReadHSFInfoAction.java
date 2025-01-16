@@ -9,20 +9,26 @@ import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import com.huaweicse.tools.migrator.common.FileAction;
 
 @Component
 public class ReadHSFInfoAction extends FileAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(ReadHSFInfoAction.class);
+
+  private static final String HSF_PROVIDER_TAG = "hsf:provider";
 
   private List<String> interfaceNames = new ArrayList<>();
 
@@ -32,7 +38,19 @@ public class ReadHSFInfoAction extends FileAction {
 
   @Override
   public void run(String... args) throws Exception {
-    File config = acceptedFiles(args[0]).get(0);
+    final String parentPath = args[0];
+    final List<File> files = acceptedFiles(parentPath);
+    if (CollectionUtils.isEmpty(files)) {
+      LOGGER.error("Failed to find hsf provider bean config file from path [{}]", parentPath);
+      return;
+    }
+    for (File configFile : files) {
+      readHsfProviderConfig(configFile);
+    }
+  }
+
+  private void readHsfProviderConfig(File config) throws ParserConfigurationException, SAXException, IOException {
+    LOGGER.info("Found provider bean config file [{}]", config);
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 
     DocumentBuilder db = dbf.newDocumentBuilder();
@@ -40,7 +58,7 @@ public class ReadHSFInfoAction extends FileAction {
 
     final Map<String, String> beansNames = getBeanRef2Names(document);
 
-    NodeList bookList = document.getElementsByTagName("hsf:provider");
+    NodeList bookList = document.getElementsByTagName(HSF_PROVIDER_TAG);
     for (int i = 0; i < bookList.getLength(); i++) {
       Node node = bookList.item(i);
       final String interfaceName = node.getAttributes().getNamedItem("interface").getNodeValue();
@@ -71,7 +89,7 @@ public class ReadHSFInfoAction extends FileAction {
 
   @Override
   protected boolean isAcceptedFile(File file) throws IOException {
-    return file.getName().equals("hsf-provider-beans.xml");
+      return StringUtils.endsWithIgnoreCase(file.getName(), "xml") && fileContains(file, HSF_PROVIDER_TAG);
   }
 
   public List<String> getInterfaceNames() {
