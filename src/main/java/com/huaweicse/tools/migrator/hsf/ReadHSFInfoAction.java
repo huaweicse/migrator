@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -37,31 +38,35 @@ public class ReadHSFInfoAction extends FileAction {
     DocumentBuilder db = dbf.newDocumentBuilder();
     Document document = db.parse(config);
 
-    Map<String, String> beansNames = new HashMap<>();
-    NodeList beanLists = document.getElementsByTagName("bean");
-    for (int j = 0; j < beanLists.getLength(); j++) {
-      Node node = beanLists.item(j);
-      Node beanName = node.getAttributes().getNamedItem("name");
-      if (beanName == null) {
-        beanName = node.getAttributes().getNamedItem("id");
-      }
-      beansNames.put(beanName.getNodeValue(),
-          node.getAttributes().getNamedItem("class").getNodeValue());
-    }
+    final Map<String, String> beansNames = getBeanRef2Names(document);
 
     NodeList bookList = document.getElementsByTagName("hsf:provider");
     for (int i = 0; i < bookList.getLength(); i++) {
       Node node = bookList.item(i);
-      Node interfaceName = node.getAttributes().getNamedItem("interface");
-      interfaceNames.add(interfaceName.getNodeValue());
-      String name = beansNames.get(node.getAttributes().getNamedItem("ref").getNodeValue());
-      if (name == null) {
+      final String interfaceName = node.getAttributes().getNamedItem("interface").getNodeValue();
+      interfaceNames.add(interfaceName);
+      final String implBeanName = beansNames.get(node.getAttributes().getNamedItem("ref").getNodeValue());
+      if (implBeanName == null) {
         LOGGER.error("ref do not have a bean {}", node.getAttributes().getNamedItem("ref").getNodeValue());
       }
-      implementationNames.add(name);
-      implementationInterfaces.put(beansNames.get(node.getAttributes().getNamedItem("ref").getNodeValue()),
-          interfaceName.getNodeValue());
+      implementationNames.add(implBeanName);
+      implementationInterfaces.put(implBeanName, interfaceName);
     }
+  }
+
+  private Map<String, String> getBeanRef2Names(Document document) {
+    Map<String, String> beansNames = new HashMap<>();
+    NodeList beanLists = document.getElementsByTagName("bean");
+    for (int j = 0; j < beanLists.getLength(); j++) {
+      final NamedNodeMap nodeAttributes = beanLists.item(j).getAttributes();
+      Node beanName = nodeAttributes.getNamedItem("name");
+      if (beanName == null) {
+        beanName = nodeAttributes.getNamedItem("id");
+      }
+      beansNames.put(beanName.getNodeValue(),
+          nodeAttributes.getNamedItem("class").getNodeValue());
+    }
+    return beansNames;
   }
 
   @Override

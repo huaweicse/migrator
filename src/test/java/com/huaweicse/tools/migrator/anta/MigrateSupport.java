@@ -56,7 +56,6 @@ public class MigrateSupport {
 
   @Test
   public void testModifyHSFProvider() throws Exception {
-    readHSFInfoAction.run("D:\\GitRepos\\QDport\\current\\V1.0\\newlog\\newlog-service");
     modifyHSFProviderAction.run("D:\\GitRepos\\QDport\\current\\V1.0\\newlog\\newlog-service");
   }
 
