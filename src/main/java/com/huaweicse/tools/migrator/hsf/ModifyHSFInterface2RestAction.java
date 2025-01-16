@@ -88,14 +88,17 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       "IOneE3BaseService.java", "IE3BaseEndpointService.java"
   );
 
+  private static final Pattern PATTERN_MULTIPLE_CURL = Pattern.compile(".*\\(.*\\(.*");
+
   private static Set<String> URL_NAMES = new HashSet<>();
 
   @Override
   public void run(String... args) throws Exception {
-    List<File> acceptedFiles = acceptedFiles(args[0]);
-    List<String> interfaceFileList = filterInterfaceFile(acceptedFiles);
+    final String parentPath = args[0];
+    List<File> acceptedFiles = acceptedFiles(parentPath);
+    Set<String> interfaceFileList = filterInterfaceFile(acceptedFiles);
     interfaceFileList.addAll(ACCEPT_FILES);
-    replaceContent(acceptedFiles, interfaceFileList);
+    replaceContent(acceptedFiles, interfaceFileList, parentPath);
   }
 
   @Override
@@ -103,15 +106,15 @@ public class ModifyHSFInterface2RestAction extends FileAction {
     return file.getName().endsWith(".java") && fileContains(file, PATTER_INTERFACE_FILE);
   }
 
-  private List<String> filterInterfaceFile(List<File> acceptedFiles) throws IOException {
-    List<String> interfaceFileList = new ArrayList<>();
+  private Set<String> filterInterfaceFile(List<File> acceptedFiles) throws IOException {
+    final Set<String> interfaceFileList = new HashSet<>();
     for (File file : acceptedFiles) {
       interfaceFileList.add(file.getName());
     }
     return interfaceFileList;
   }
 
-  private void replaceContent(List<File> acceptedFiles, List<String> interfaceFileList) throws Exception {
+  private void replaceContent(List<File> acceptedFiles, Set<String> interfaceFileList, String parentPath) throws Exception {
     String fileName;
 
     for (File file : acceptedFiles) {
@@ -188,15 +191,15 @@ public class ModifyHSFInterface2RestAction extends FileAction {
             String extendsName = matcher.group();
             extendsName = extendsName.substring("extends".length() + 1).trim();
             if (!interfaceFileList.contains(extendsName + ".java")) {
-              LOGGER.error("interface not add to list [{}] {} {}", extendsName, fileName, lineNumber);
+              LOGGER.error("interface [{}] not found in local path {}. {} {}", extendsName, parentPath, fileName, lineNumber);
             }
           } else {
-            LOGGER.error("invalid interface detected {}", fileName, lineNumber);
+            LOGGER.error("invalid interface detected {}, {}", fileName, lineNumber);
           }
         }
 
-        if(line.matches(".*\\(.*\\(.*")) {
-          LOGGER.error("need check this method and can not process, {} {}", fileName, lineNumber);
+        if (PATTERN_MULTIPLE_CURL.matcher(line).find()) {
+          LOGGER.error("need check this method and can not process, found multiple [(] {} {}", fileName, lineNumber);
         }
 
         if (isMethod(line)) {
