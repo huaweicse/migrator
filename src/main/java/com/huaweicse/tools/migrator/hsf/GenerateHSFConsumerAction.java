@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -68,16 +69,18 @@ public class GenerateHSFConsumerAction extends FileAction {
     final NodeList beanLists = getBeanLists(config);
     for (int i = 0; i < beanLists.getLength(); i++) {
       Node node = beanLists.item(i);
-      String interfaceFullName = node.getAttributes().getNamedItem("interface").getNodeValue();
-      String interfaceName = interfaceFullName.substring(interfaceFullName.lastIndexOf(".") + 1);
-      if (!consumers.add(interfaceName)) {
+      final NamedNodeMap attributes = node.getAttributes();
+      String interfaceFullName = attributes.getNamedItem("interface").getNodeValue();
+      final String beanId = attributes.getNamedItem("id").getNodeValue();
+      if (!consumers.add(beanId)) {
         LOGGER.warn("Duplicate consumer found in file [{}], for consumer {}", config, interfaceFullName);
       }
-      String interfaceLowerName = interfaceName.toLowerCase(Locale.ROOT).charAt(0) + interfaceName.substring(1);
+      String interfaceLowerName = beanId.toLowerCase(Locale.ROOT).charAt(0) + beanId.substring(1);
       writeLine(tempStream, "    @FeignClient(name = \"${feign.client." + className + "}\",");
       writeLine(tempStream, "        contextId = \"" + interfaceLowerName
           + "\", path = \"" + "/" + interfaceLowerName + "\")");
-      writeLine(tempStream, "    public interface " + interfaceName + "Ext extends " + interfaceFullName + "{}");
+      final String feignInterface = beanId.toUpperCase(Locale.ROOT).charAt(0) + beanId.substring(1) + "Ext";
+      writeLine(tempStream, "    public interface " + feignInterface + " extends " + interfaceFullName + "{}");
       writeLine(tempStream, "");
     }
   }
