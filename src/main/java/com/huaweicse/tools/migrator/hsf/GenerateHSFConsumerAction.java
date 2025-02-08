@@ -71,7 +71,11 @@ public class GenerateHSFConsumerAction extends FileAction {
       Node node = beanLists.item(i);
       final NamedNodeMap attributes = node.getAttributes();
       String interfaceFullName = attributes.getNamedItem("interface").getNodeValue();
+      final String interfaceName = interfaceFullName.substring(interfaceFullName.lastIndexOf(".") + 1);
       final String beanId = attributes.getNamedItem("id").getNodeValue();
+      if (!beanId.equalsIgnoreCase(interfaceName)) {
+        LOGGER.warn("Bean id [{}] is different from interfaceName [{}]", beanId, interfaceName);
+      }
       if (!consumers.add(beanId)) {
         LOGGER.warn("Duplicate consumer found in file [{}], for consumer {}", config, interfaceFullName);
       }
