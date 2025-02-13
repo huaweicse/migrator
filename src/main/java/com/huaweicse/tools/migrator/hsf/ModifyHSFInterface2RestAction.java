@@ -278,9 +278,6 @@ public class ModifyHSFInterface2RestAction extends FileAction {
       if (parameter.isSimpleType()) {
         result.append("@RequestParam(required = false, value=\"" + parameter.name + "\") " + parameter.type + " "
             + parameter.name);
-      } else if (parameter.isStringType()) {
-        result.append("@RequestHeader(required = false, value=\"" + parameter.name + "\") " + parameter.type + " "
-            + parameter.name);
       } else {
         result.append("@RequestBody(required = false) " + parameter.type + " " + parameter.name);
         bodyCount++;
