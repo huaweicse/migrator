@@ -15,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.huaweicse.tools.migrator.common.FileAction;
 
@@ -125,10 +126,19 @@ public class ModifyHSFConsumerAction extends FileAction {
 
           // 处理@HSFConsumer注解信息及接口信息
           if (line.contains(HSF_CONSUMER)) {
-            String nextLine = lines.get(i + 1);
-            Matcher interfaceDefMatcher = INTERFACE_DEF.matcher(nextLine);
-            if (interfaceDefMatcher.find()) {
-              Matcher nameMather = INTERFACE_DEF_CLASS.matcher(interfaceDefMatcher.group());
+            String interfaceDef = null;
+            int nl = i + 1;
+            for (; nl < lines.size(); nl++) {
+              String nextLine = lines.get(nl);
+              Matcher interfaceDefMatcher = INTERFACE_DEF.matcher(nextLine);
+              if (interfaceDefMatcher.find()) {
+                interfaceDef = interfaceDefMatcher.group();
+                break;
+              }
+            }
+            i = nl - 1;
+            if (StringUtils.hasText(interfaceDef)) {
+              Matcher nameMather = INTERFACE_DEF_CLASS.matcher(interfaceDef);
               if (nameMather.find()) {
                 String interfaceName = nameMather.group();
                 String feignClientInfo = feignClientInfo(line, interfaceName, className);
